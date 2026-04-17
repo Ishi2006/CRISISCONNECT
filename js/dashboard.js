@@ -26,10 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function initGlobe() {
     const mapEl = document.getElementById('map');
     // Ensure parent is styled so canvas covers it cleanly
-    mapEl.style.backgroundColor = '#050505';
+    mapEl.style.backgroundColor = '#000000';
 
     globe = Globe()(mapEl)
         .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+        .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
         .showAtmosphere(true)
         .atmosphereColor('#ff4400')
         .atmosphereAltitude(0.15)

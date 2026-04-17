@@ -9,11 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0a0f;
+            --bg: #000000;
             --text: #ffffff;
-            --secondary: #a0a0a0;
-            --accent: #3b82f6;
-            --globe-size: 300px;
+            --secondary: #8a8a8a;
+            --accent: #ff6600;
+            --amber: #ffb340;
+            --red: #ff3b3b;
+            --globe-size: 700px;
         }
 
         * {
@@ -79,43 +81,27 @@
         /* Globe Container */
         .globe-container {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            width: var(--globe-size);
-            height: var(--globe-size);
-            margin-top: calc(var(--globe-size) / -2);
-            margin-left: calc(var(--globe-size) / -2);
-            z-index: 2;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
             pointer-events: none;
-            transition: transform 1.4s cubic-bezier(0.23, 1, 0.32, 1);
-            will-change: transform;
+            transition: all 1.4s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform, opacity;
+            opacity: 0.85;
         }
 
         .globe {
             width: 100%;
             height: 100%;
-            border-radius: 50%;
-            background: url('https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/globe.jpeg');
-            background-size: cover;
-            animation: rotate-globe 30s linear infinite;
-            box-shadow: 
-                inset -30px -30px 80px rgba(0, 0, 0, 0.9),
-                inset 10px 10px 60px rgba(59, 130, 246, 0.4),
-                0 0 50px rgba(59, 130, 246, 0.2);
             position: relative;
+            filter: drop-shadow(0 0 30px rgba(255, 102, 0, 0.3));
         }
 
-        @keyframes rotate-globe {
-            from { background-position: 0 0; }
-            to { background-position: 400px 0; }
-        }
-
-        .globe-light {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 70%);
-            pointer-events: none;
+        #globe-viz {
+            width: 100%;
+            height: 100%;
         }
 
         /* Navigation Dots */
@@ -148,9 +134,10 @@
             transform: translateX(10px);
             transition: all 0.3s ease;
             pointer-events: none;
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(255, 102, 0, 0.1);
             padding: 4px 10px;
             border-radius: 4px;
+            border: 1px solid rgba(255, 102, 0, 0.2);
         }
 
         .dot-wrapper:hover .dot-label {
@@ -186,7 +173,8 @@
             align-items: center;
             padding: 0 10%;
             position: relative;
-            z-index: 3;
+            z-index: 10;
+            background: transparent;
         }
 
         .content {
@@ -208,7 +196,7 @@
             margin-bottom: 20px;
         }
 
-        .hero-title span { color: var(--accent); }
+        .hero-title span { color: var(--accent); text-shadow: 0 0 20px rgba(255, 102, 0, 0.4); }
 
         .subtext {
             font-size: 18px;
@@ -342,14 +330,18 @@
             border-radius: 4px;
         }
 
-        /* Responsive */
+        /* Scripts for 3D Globe */
         @media (max-width: 768px) {
             .hero-title { font-size: 50px; }
             .dot-nav { display: none; }
-            .globe-container { --globe-size: 200px; }
+            .globe-container { --globe-size: 300px; }
             section { padding: 0 5%; }
         }
     </style>
+    <!-- Globe Dependencies -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.32.0/dist/globe.gl.min.js"></script>
 </head>
 <body>
 
@@ -368,7 +360,7 @@
 
     <div class="globe-container" id="globe-wrap">
         <div class="globe">
-            <div class="globe-light"></div>
+            <div id="globe-viz"></div>
         </div>
     </div>
 
@@ -394,14 +386,14 @@
     <!-- Hero Section -->
     <section class="section-hero active" id="sec-0">
         <div class="content">
-            <h1 class="hero-title">Explore /<br><span>Our World.</span></h1>
+            <h1 class="hero-title">EXPLORE /<br><span>THE INTEL.</span></h1>
             <p class="subtext">
-                Witness the pulse of our planet in high-definition. CrisisConnect provides 
-                immersive disaster intelligence for a resilient tomorrow.
+                Mission critical disaster intelligence. High-precision 3D global monitoring 
+                for tactical response units and emergency operators.
             </p>
             <div class="btn-group">
-                <button class="btn btn-filled" onclick="window.location.href='dashboard.html?v=2.0'">Begin Journey</button>
-                <a href="#" class="btn btn-outline" onclick="scrollToSection(1)">Learn More</a>
+                <button class="btn btn-filled" onclick="window.location.href='dashboard.html?v=3.0'">Command Center</button>
+                <a href="#" class="btn btn-outline" onclick="scrollToSection(1)">Specs</a>
             </div>
         </div>
     </section>
@@ -467,28 +459,71 @@
             starfield.appendChild(star);
         }
 
-        // Scroll Logic
-        const globe = document.getElementById('globe-wrap');
+        // ── Globe Initialization ──
+        let worldGlobe;
+        const globeStates = [
+            { x: '25%', y: '0', scale: 1.0, lat: 20, lng: 30, alt: 2.2 },
+            { x: '0', y: '0', scale: 1.0, lat: 10, lng: 0, alt: 2.5 },
+            { x: '-25%', y: '0', scale: 1.0, lat: 40, lng: -40, alt: 2.2 },
+            { x: '0', y: '0', scale: 2.0, lat: 20, lng: 40, alt: 1.5 }
+        ];
+
+        function initGlobe() {
+            const container = document.getElementById('globe-viz');
+            worldGlobe = Globe()(container)
+                .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+                .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+                .showAtmosphere(true)
+                .atmosphereColor('#ff4400')
+                .atmosphereAltitude(0.25)
+                .width(window.innerWidth)
+                .height(window.innerHeight)
+                .polygonAltitude(0.01)
+                .polygonSideColor(() => 'rgba(255, 68, 0, 0.1)')
+                .polygonStrokeColor(() => '#ff6600');
+
+            const tacticalData = {
+                'Russia': '#4a1100', 'China': '#802b00', 'United States': '#1a331a', 'Ukraine': '#ff3b3b', 'Brazil': '#1a331a'
+            };
+
+            fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
+                .then(res => res.json())
+                .then(worldData => {
+                    const countries = topojson.feature(worldData, worldData.objects.countries).features;
+                    worldGlobe.polygonsData(countries)
+                        .polygonCapColor(d => tacticalData[d.properties.NAME] || 'rgba(120, 50, 0, 0.1)');
+                });
+
+            const markers = [
+                { lat: 31.5, lng: 34.5, color: '#ff3b3b' },
+                { lat: 15.0, lng: 39.0, color: '#ffaa00' },
+                { lat: 48.0, lng: 31.0, color: '#ff0000' }
+            ];
+
+            worldGlobe.ringsData(markers)
+                .ringColor(d => d.color)
+                .ringMaxRadius(8)
+                .ringPropagationSpeed(3)
+                .ringRepeatPeriod(1000)
+                .controls().autoRotate = true;
+                worldGlobe.controls().autoRotateSpeed = 0.3;
+                worldGlobe.controls().enableZoom = false;
+
+            worldGlobe.pointOfView({ lat: 20, lng: 20, altitude: 2.5 });
+        }
+
+        const globeWrap = document.getElementById('globe-wrap');
         const sections = document.querySelectorAll('section');
         const dots = document.querySelectorAll('.dot-wrapper');
         const progressBar = document.getElementById('progress-bar');
 
-        const globeStates = [
-            { x: '150px', y: '0', scale: 1.2 },    // Hero: On the right
-            { x: '0', y: '0', scale: 1 },         // Innovation: Center
-            { x: '-150px', y: '0', scale: 1 },    // Discovery: On the left
-            { x: '0', y: '100px', scale: 2 }      // Future: Foreground
-        ];
-
         function handleScroll() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const progress = scrollTop / scrollHeight;
+            const progress = (scrollTop / scrollHeight) || 0;
 
-            // Progress Bar
             progressBar.style.width = `${progress * 100}%`;
 
-            // Active Section and Globe Transform
             let activeIdx = 0;
             sections.forEach((section, idx) => {
                 const rect = section.getBoundingClientRect();
@@ -497,11 +532,14 @@
                 }
             });
 
-            // Update Globe
             const state = globeStates[activeIdx];
-            globe.style.transform = `translate(${state.x}, ${state.y}) scale(${state.scale})`;
+            if (state) {
+                globeWrap.style.transform = `translate(${state.x}, ${state.y}) scale(${state.scale})`;
+                if (worldGlobe) {
+                    worldGlobe.pointOfView({ lat: state.lat, lng: state.lng, altitude: state.alt }, 1500);
+                }
+            }
 
-            // Update UI
             sections.forEach((s, i) => {
                 if (i === activeIdx) s.classList.add('active');
                 else s.classList.remove('active');
@@ -514,47 +552,42 @@
         }
 
         function scrollToSection(idx) {
-            window.scrollTo({
-                top: window.innerHeight * idx,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: window.innerHeight * idx, behavior: 'smooth' });
         }
 
-        window.addEventListener('scroll', () => {
-            requestAnimationFrame(handleScroll);
+        window.addEventListener('scroll', () => { requestAnimationFrame(handleScroll); });
+        window.addEventListener('resize', () => {
+            if (worldGlobe) worldGlobe.width(window.innerWidth).height(window.innerHeight);
+            resizeHandler();
         });
 
-        // Trigger once on load
-        handleScroll();
-
-        // Responsive handling for globe positions
         function resizeHandler() {
             if (window.innerWidth < 768) {
-                globeStates[0] = { x: '0', y: '100px', scale: 0.8 };
-                globeStates[1] = { x: '0', y: '0', scale: 0.8 };
-                globeStates[2] = { x: '0', y: '-100px', scale: 0.8 };
-                globeStates[3] = { x: '0', y: '150px', scale: 1.2 };
+                globeStates[0] = { x: '0', y: '20%', scale: 0.7, lat: 20, lng: 30, alt: 3.5 };
+                globeStates[1] = { x: '0', y: '0', scale: 0.7, lat: 10, lng: 0, alt: 3.5 };
+                globeStates[2] = { x: '0', y: '-20%', scale: 0.7, lat: 40, lng: -40, alt: 3.5 };
+                globeStates[3] = { x: '0', y: '20%', scale: 1.2, lat: 20, lng: 40, alt: 1.5 };
             } else {
-                globeStates[0] = { x: '150px', y: '0', scale: 1.2 };
-                globeStates[1] = { x: '0', y: '0', scale: 1 };
-                globeStates[2] = { x: '-150px', y: '0', scale: 1 };
-                globeStates[3] = { x: '0', y: '100px', scale: 2 };
+                globeStates[0] = { x: '25%', y: '0', scale: 1.0, lat: 20, lng: 30, alt: 2.2 };
+                globeStates[1] = { x: '0', y: '0', scale: 1.0, lat: 10, lng: 0, alt: 2.5 };
+                globeStates[2] = { x: '-25%', y: '0', scale: 1.0, lat: 40, lng: -40, alt: 2.2 };
+                globeStates[3] = { x: '0', y: '-10%', scale: 2.0, lat: 20, lng: 40, alt: 1.2 };
             }
             handleScroll();
         }
 
-        window.addEventListener('resize', resizeHandler);
-        resizeHandler();
+        window.addEventListener('load', () => {
+            initGlobe();
+            resizeHandler();
+        });
 
-        // Session Awareness for Landing Page
         function updateNavActions() {
             const token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
             const navActions = document.getElementById('nav-actions');
-            
             if (token) {
                 navActions.innerHTML = `
                     <a href="dashboard.html?v=2.0" class="btn btn-filled btn-nav">Go to Dashboard</a>
-                    <button onclick="ccLogout()" class="btn btn-outline btn-nav" style="border:none; padding: 0 10px;">⏏</button>
+                    <button onclick="ccLogout()" class="btn btn-outline btn-nav" style="border:none; padding: 0 10px; cursor:pointer;">⏏</button>
                 `;
             } else {
                 navActions.innerHTML = `<a href="login.html?v=2.0" class="btn btn-outline btn-nav">Operator Login</a>`;

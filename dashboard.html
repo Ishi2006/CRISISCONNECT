@@ -163,10 +163,27 @@
   <script src="js/dashboard.js?v=2.0"></script>
 
   <style>
-    .conflict-widget {
+    .tactical-panel-wrapper {
       position: absolute;
       bottom: 20px;
       right: 20px;
+      z-index: 2000;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tactical-panel-wrapper.collapsed {
+      transform: translateX(calc(100% - 44px)); /* Leaves button visible */
+    }
+    .tactical-arrow {
+      margin-bottom: 8px; /* Lift arrow slightly from bottom edge */
+    }
+    .tactical-panel-wrapper.collapsed .tactical-arrow svg {
+      transform: rotate(180deg);
+    }
+    .conflict-widget {
+      position: relative;
       width: 420px;
       background: rgba(5, 5, 10, 0.98);
       border: 1px solid #ff660044;
@@ -174,7 +191,6 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.8);
       overflow: hidden;
       font-family: 'Courier New', monospace;
-      z-index: 2000;
     }
 
     .widget-header {
@@ -229,31 +245,36 @@
     .ticker-pill { background: #ff220033; border: 1px solid #ff2200; color: #ff2200; font-weight: bold; padding: 0 4px; border-radius: 2px; margin: 0 10px; }
   </style>
 
-  <div class="conflict-widget">
-    <div class="widget-header">
-      <div class="header-left">
-        <span class="pill">CONFLICT</span>
-        <div class="pulse-dot-red"></div>
-        <span class="live-tracking-text">● TACTICAL COMMAND</span>
+  <div class="tactical-panel-wrapper" id="tactical-wrapper">
+    <button class="toggle-arrow tactical-arrow" onclick="document.getElementById('tactical-wrapper').classList.toggle('collapsed')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </button>
+    <div class="conflict-widget">
+      <div class="widget-header">
+        <div class="header-left">
+          <span class="pill">CONFLICT</span>
+          <div class="pulse-dot-red"></div>
+          <span class="live-tracking-text">● TACTICAL COMMAND</span>
+        </div>
       </div>
-    </div>
-    
-    <div id="mini-feed-container" style="height: 180px; position: relative;">
-      <div class="threat-legend">
-        <div class="legend-item"><div class="ldot" style="background:#ff2200"></div>CRITICAL</div>
-        <div class="legend-item"><div class="ldot" style="background:#cc3300"></div>HIGH</div>
-        <div class="legend-item"><div class="ldot" style="background:#4a5c00"></div>MODERATE</div>
+      
+      <div id="mini-feed-container" style="height: 180px; position: relative;">
+        <div class="threat-legend">
+          <div class="legend-item"><div class="ldot" style="background:#ff2200"></div>CRITICAL</div>
+          <div class="legend-item"><div class="ldot" style="background:#cc3300"></div>HIGH</div>
+          <div class="legend-item"><div class="ldot" style="background:#4a5c00"></div>MODERATE</div>
+        </div>
+        <div class="live-feed-side" id="live-feed-globe">
+          <!-- Dyn. -->
+        </div>
       </div>
-      <div class="live-feed-side" id="live-feed-globe">
-        <!-- Dyn. -->
-      </div>
-    </div>
 
-    <div class="ticker-container">
-      <div class="ticker-content">
-        <span class="ticker-pill">FLASH</span> SITREP: Israel reports intense activity in central sector. 
-        <span class="ticker-pill">FLASH</span> ANALYSIS: Supply lines stressed in northern corridor. 
-        <span class="ticker-pill">FLASH</span> INTEL: North Korean troop movements confirmed near border.
+      <div class="ticker-container">
+        <div class="ticker-content">
+          <span class="ticker-pill">FLASH</span> SITREP: Israel reports intense activity in central sector. 
+          <span class="ticker-pill">FLASH</span> ANALYSIS: Supply lines stressed in northern corridor. 
+          <span class="ticker-pill">FLASH</span> INTEL: North Korean troop movements confirmed near border.
+        </div>
       </div>
     </div>
   </div>

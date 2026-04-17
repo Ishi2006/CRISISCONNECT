@@ -3,102 +3,32 @@
  * Handles background animation, demo access, and authentication.
  */
 
-/* ─── Animated World-Grid Background ─── */
+/* ─── Animated Map Background ─── */
 (function() {
-    const canvas = document.getElementById('bg-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const mapContainer = document.getElementById('map-bg');
+    if (!mapContainer) return;
 
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
+    const map = L.map('map-bg', {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false
+    }).setView([20, 20], 3);
 
-    const particles = [];
-    for (let i = 0; i < 60; i++) {
-        particles.push({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            vx: (Math.random() - 0.5) * 0.3,
-            vy: (Math.random() - 0.5) * 0.3,
-            r: Math.random() * 1.5 + 0.5,
-            alpha: Math.random() * 0.5 + 0.1,
-            isCritical: Math.random() < 0.12
-        });
-    }
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+    }).addTo(map);
 
-    const LAT_LINES  = 10;
-    const LNG_LINES  = 16;
-    let frame = 0;
-
-    function draw() {
-        frame++;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const W = canvas.width, H = canvas.height;
-
-        // Latitude lines
-        for (let i = 0; i <= LAT_LINES; i++) {
-            const y = (i / LAT_LINES) * H;
-            const isMajor = i === 0 || i === Math.floor(LAT_LINES / 2) || i === LAT_LINES;
-            ctx.beginPath();
-            ctx.strokeStyle = isMajor ? 'rgba(255, 85, 0, 0.12)' : 'rgba(43, 27, 16, 0.5)';
-            ctx.lineWidth = isMajor ? 0.8 : 0.4;
-            for (let x = 0; x <= W; x += 4) {
-                const bend = Math.sin((x / W) * Math.PI) * 6 * (i / LAT_LINES - 0.5);
-                if (x === 0) ctx.moveTo(x, y + bend);
-                else ctx.lineTo(x, y + bend);
-            }
-            ctx.stroke();
-        }
-
-        // Longitude lines
-        for (let j = 0; j <= LNG_LINES; j++) {
-            const x = (j / LNG_LINES) * W;
-            const isMajor = j === 0 || j === Math.floor(LNG_LINES / 2) || j === LNG_LINES;
-            ctx.beginPath();
-            ctx.strokeStyle = isMajor ? 'rgba(255, 85, 0, 0.12)' : 'rgba(43, 27, 16, 0.5)';
-            ctx.lineWidth = isMajor ? 0.8 : 0.4;
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, H);
-            ctx.stroke();
-        }
-
-        // Hotspots
-        const hotspots = [
-            { rx: 0.53, ry: 0.42 }, { rx: 0.80, ry: 0.55 }, { rx: 0.18, ry: 0.48 },
-            { rx: 0.55, ry: 0.72 }, { rx: 0.84, ry: 0.43 }
-        ];
-
-        hotspots.forEach((h, idx) => {
-            const hx = h.rx * W, hy = h.ry * H;
-            const pulse = (Math.sin(frame * 0.03 + idx * 1.2) + 1) / 2;
-            ctx.beginPath();
-            ctx.arc(hx, hy, 8 + pulse * 14, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 59, 59, ${0.5 - pulse * 0.35})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(hx, hy, 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#ff3b3b';
-            ctx.fill();
-        });
-
-        // Particles
-        particles.forEach(p => {
-            p.x += p.vx; p.y += p.vy;
-            if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-            if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fillStyle = p.isCritical ? `rgba(255, 59, 59, ${p.alpha})` : `rgba(255, 85, 0, ${p.alpha})`;
-            ctx.fill();
-        });
-
-        requestAnimationFrame(draw);
-    }
-    draw();
+    // Adding some tactical grid lines over the map via CSS or simple overlay can work, 
+    // but for now, let's keep it clean with a slow pan.
+    let lat = 20, lng = 20;
+    setInterval(() => {
+        lng += 0.02;
+        map.panTo([lat, lng], { animate: false });
+    }, 100);
 })();
 
 /* ─── UI Interactions ─── */
