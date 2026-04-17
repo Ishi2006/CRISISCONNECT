@@ -10,6 +10,7 @@ PAGES = {
     'simulate.html': 5,
     'analytics.html': 6,
     'alerts.html': 7,
+    'emergency.html': 8,
 }
 
 LINKS = [
@@ -29,7 +30,10 @@ LINKS = [
      '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>'),
     ('alerts.html', 'Alerts',
      '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'),
+    ('emergency.html', 'Emergency',
+     '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>'),
 ]
+
 
 def build_sidebar(active_idx):
     lines = ['<aside class="sidebar">']

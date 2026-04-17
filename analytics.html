@@ -11,125 +11,12 @@
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <style>
-    :root {
-      --bg: #0a0e1a;
-      --bg2: #110D0A;
-      --card: #1A1008;
-      --cyan: #FF5500;
-      --red: #ff3b3b;
-      --amber: #ffb340;
-      --green: #00e676;
-      --text: #e8eaf6;
-      --muted: #A08870;
-      --border: #2B1B10;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    h1, h2, h3, h4, h5, h6 { font-family: 'Rajdhani', sans-serif; }
-    .data-font { font-family: 'Share Tech Mono', monospace; }
-    
-    /* Navbar */
-    .navbar { height: 56px; flex-shrink: 0; background-color: var(--bg2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 1000; }
-    .nav-left { display: flex; align-items: center; gap: 10px; }
-    .nav-left svg { width: 24px; height: 24px; color: var(--cyan); }
-    .nav-left h1 { font-size: 20px; margin: 0; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; }
-    .brand-crisis { color: var(--cyan); }
-    .brand-connect { color: #fff; }
-    .nav-center { flex: 1; display: flex; justify-content: center; }
-    .search-input { background-color: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 16px 8px 40px; border-radius: 20px; width: 400px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" stroke="%23A08870" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; }
-    .search-input:focus { border-color: var(--cyan); }
-    .search-input::placeholder { color: var(--muted); }
-    .nav-right { display: flex; align-items: center; gap: 24px; }
-    .bell-icon { position: relative; display: flex; align-items: center; }
-    .bell-icon svg { width: 20px; height: 20px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
-    .bell-icon:hover svg { color: var(--text); }
-    .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: white; font-size: 10px; font-weight: bold; font-family: 'Share Tech Mono', monospace; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-    
-    /* Layout */
-    .app-shell { display: flex; flex: 1; overflow: hidden; position: relative; }
-    
-    /* Sidebar */
-    .sidebar { width: 60px; flex-shrink: 0; background-color: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 16px; z-index: 900; }
-    .sidebar-btn { width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-left: 3px solid transparent; color: var(--muted); transition: all 0.2s; text-decoration: none; }
-    .sidebar-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-    .sidebar-btn.active { border-left-color: var(--cyan); color: var(--cyan); background: rgba(255, 85, 0, 0.05); }
-    .sidebar-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-    /* Dashboard Layout */
-    .main-content { flex: 1; overflow-y: auto; background: var(--bg); padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; scroll-behavior: smooth; }
-    
-    /* Filter Bar */
-    .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
-    .filter-lbl { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-right: 12px; }
-    .pill-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
-    .pill-btn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
-    .pill-btn.active { background: var(--cyan); border-color: var(--cyan); color: var(--bg); font-weight: bold; box-shadow: 0 0 10px rgba(255,85,0,0.4); }
-
-    /* Stat Cards Row */
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s; }
-    .stat-card:hover { border-color: rgba(160, 136, 112, 0.4); transform: translateY(-2px); }
-    .sc-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
-    .sc-val { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: 1px; }
-
-    /* Charts Grid Layout */
-    .charts-grid { display: grid; grid-template-columns: 55% 1fr; gap: 24px; }
-    .chart-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; display: flex; flex-direction: column; }
-    .fw-chart { grid-column: 1 / -1; }
-    .cb-header { font-family: 'Rajdhani', sans-serif; font-size: 18px; color: #fff; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-    .cb-header b { font-weight: 600; }
-    .chart-canvas-wrap { position: relative; width: 100%; flex: 1; min-height: 250px; }
-
-    /* Calendar Heatmap */
-    .cal-wrap { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; overflow-x: auto; padding-bottom: 8px; }
-    .cal-months { display: grid; grid-template-columns: repeat(12, 1fr); width: calc(100% - 20px); margin-left: 20px; color: var(--muted); font-size: 11px; font-family: 'DM Sans'; text-transform: uppercase; }
-    .cal-months span { text-align: left; padding-left: 4px; }
-    
-    .cal-body { display: flex; gap: 8px; width: 100%; }
-    .cal-y { display: grid; grid-template-rows: repeat(7, 1fr); font-size: 10px; color: var(--muted); gap: 2px; text-transform: uppercase; align-items: center; width: 20px; }
-    .cal-grid { display: grid; grid-auto-flow: column; grid-template-columns: repeat(52, 1fr); grid-template-rows: repeat(7, 1fr); gap: 3px; flex: 1; }
-    .cal-cell { width: 100%; aspect-ratio: 1; max-width: 14px; border-radius: 2px; cursor: pointer; transition: transform 0.1s; position: relative; }
-    .cal-cell:hover { opacity: 0.8; transform: scale(1.2); z-index: 2; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
-    
-    /* Calendar Colors */
-    .sev-0 { background: #2B1B10; }
-    .sev-1, .sev-2 { background: #0d4a7a; }
-    .sev-3 { background: #1565c0; }
-    .sev-4 { background: #ff8800; box-shadow: 0 0 4px rgba(255,136,0,0.4); }
-    .sev-5 { background: #ff3b3b; box-shadow: 0 0 4px rgba(255,59,59,0.5); }
-    
-    /* Heatmap legend */
-    .heat-legend { display: flex; align-items: center; justify-content: flex-end; width: 100%; gap: 12px; margin-top: 12px; font-size: 10px; color: var(--muted); text-transform: uppercase; }
-    .hl-dots { display: flex; gap: 4px; align-items: center; }
-    .hl-dots div { width: 10px; height: 10px; border-radius: 2px; }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-    /* Status Bar */
-    .status-bar { height: 30px; flex-shrink: 0; background-color: var(--bg2); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; z-index: 1000; }
-  </style>
-  <script>
-    (function() {
-      var token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
-      if (!token) { window.location.replace('login.html'); }
-    })();
-  </script>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  
+  <!-- Page Specific Styles -->
+  <link rel="stylesheet" href="css/analytics.css">
 </head>
 <body>
 
@@ -148,9 +35,9 @@
       <div class="bell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><div class="badge data-font">3</div></div>
       <div class="live-status"><div class="live-dot" style="background-color: var(--cyan); box-shadow: 0 0 8px var(--cyan);"></div> SYNCED</div>
     </div>
-      <div class="nav-right-extra" style="display:flex;align-items:center;gap:16px;margin-left:8px;">
-      <span class="mono" id="nav-user" style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;"></span>
-      <button onclick="ccLogout()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">⏏ LOGOUT</button>
+    <div class="nav-right-extra">
+      <span class="mono" id="nav-user"></span>
+      <button onclick="ccLogout()">⏏ LOGOUT</button>
     </div>
   </nav>
 
@@ -179,8 +66,11 @@
       <a href="analytics.html" class="sidebar-btn active" title="Analytics">
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
       </a>
-      <a href="alerts.html" class="sidebar-btn" title="Alerts" style="margin-top:auto; margin-bottom: 10px;">
+      <a href="alerts.html" class="sidebar-btn" title="Alerts">
         <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      </a>
+      <a href="emergency.html" class="sidebar-btn" title="Emergency" style="margin-top:auto; margin-bottom: 10px;">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
       </a>
     </aside>
 
@@ -288,291 +178,10 @@
     <div>CRISISCONNECT v1.0 | VIEW : GLOBAL ANALYTICS</div>
   </div>
 
-  <script>
-    // Global Chart Defaults
-    Chart.defaults.color = '#A08870';
-    Chart.defaults.font.family = "'DM Sans', sans-serif";
-    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(14, 9, 5, 0.9)';
-    Chart.defaults.plugins.tooltip.titleFont = { family: 'Rajdhani', size: 14 };
-    Chart.defaults.plugins.tooltip.bodyFont = { family: 'Share Tech Mono', size: 13 };
-    Chart.defaults.plugins.tooltip.borderColor = '#2B1B10';
-    Chart.defaults.plugins.tooltip.borderWidth = 1;
+  <!-- Auth Script -->
+  <script src="js/auth.js"></script>
 
-    // --- CHART INSTANCES ---
-    let lineChart, barChart, pieChart;
-    let totalPieCount = 0;
-
-    // Center Text Plugin Hook
-    const centerTextPlugin = {
-      id: 'centerText',
-      beforeDraw: function(chart) {
-        if (chart.config.type !== 'doughnut') return;
-        let w = chart.width, h = chart.height, ctx = chart.ctx;
-        ctx.restore();
-        
-        let fontSize = (h / 8).toFixed(2);
-        ctx.font = `bold ${fontSize}px "Share Tech Mono"`;
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#ffffff";
-        let text = totalPieCount.toString(),
-            textX = Math.round((w - ctx.measureText(text).width) / 2),
-            textY = h / 2;
-        ctx.fillText(text, textX, textY);
-        
-        ctx.font = `bold ${(h / 18).toFixed(2)}px "Rajdhani"`;
-        ctx.fillStyle = "#FF5500";
-        let lText = "TOTAL";
-        let lTextX = Math.round((w - ctx.measureText(lText).width) / 2);
-        ctx.fillText(lText, lTextX, textY - (fontSize/2) - 5);
-        ctx.save();
-      }
-    };
-    Chart.register(centerTextPlugin);
-
-    // Filter Logic Toggle
-    const pills = document.querySelectorAll('.filter-bar .pill-btn');
-    pills.forEach(btn => {
-      btn.addEventListener('click', () => {
-        pills.forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        
-        const filterVal = btn.dataset.days;
-        let days = 365;
-        if(filterVal !== 'all') days = parseInt(filterVal);
-        else days = 500;
-
-        generateRandomDataUpdate(days);
-      });
-    });
-
-    // Color Gradients Helper
-    function hexToRGBA(hex, alpha) {
-      let r = parseInt(hex.slice(1, 3), 16),
-          g = parseInt(hex.slice(3, 5), 16),
-          b = parseInt(hex.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
-    // Core Logic rendering function
-    function generateRandomDataUpdate(timeFactor) {
-      const mul = timeFactor / 365; 
-
-      // 1. Stat Cards
-      const totalEv = Math.floor(142 * mul) + Math.floor(Math.random()*15);
-      const affNum = (4.2 * mul).toFixed(1);
-      
-      document.getElementById('st-total').innerText = totalEv;
-      document.getElementById('st-people').innerText = affNum + 'M';
-      document.getElementById('st-countries').innerText = Math.max(1, Math.floor(34 * Math.max(0.2, mul)));
-      document.getElementById('st-sev').innerText = (3.0 + Math.random()*0.8).toFixed(1);
-
-      // 2. Line Chart Gen
-      const mLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const mDataTot = [], mDataCrit = [];
-      for(let i=0; i<12; i++) {
-        const t = Math.floor((Math.random()*15 + 5) * mul);
-        mDataTot.push(t);
-        mDataCrit.push(Math.floor(t * (0.1 + Math.random()*0.2)));
-      }
-
-      if(lineChart) {
-        lineChart.data.datasets[0].data = mDataTot;
-        lineChart.data.datasets[1].data = mDataCrit;
-        lineChart.update();
-      } else {
-        const ctxL = document.getElementById('lineChart').getContext('2d');
-        lineChart = new Chart(ctxL, {
-          type: 'line',
-          data: {
-            labels: mLabels,
-            datasets: [
-              {
-                label: 'Total Events',
-                data: mDataTot,
-                borderColor: '#FF5500',
-                backgroundColor: 'rgba(255, 85, 0, 0.15)',
-                fill: true,
-                tension: 0.4,
-                borderWidth: 2,
-                pointBackgroundColor: '#0a0e1a',
-                pointBorderColor: '#FF5500'
-              },
-              {
-                label: 'Critical / Catastrophic',
-                data: mDataCrit,
-                borderColor: '#ff3b3b',
-                backgroundColor: 'transparent',
-                fill: false,
-                tension: 0.4,
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointBackgroundColor: '#0a0e1a',
-                pointBorderColor: '#ff3b3b'
-              }
-            ]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-              y: { grid: { color: '#2B1B10' }, beginAtZero: true },
-              x: { grid: { color: '#2B1B10' } }
-            },
-            plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 12, usePointStyle: true } } }
-          }
-        });
-      }
-
-      // 3. Bar Chart Gen
-      const cList = ['Philippines','Bangladesh','Indonesia','Türkiye','Japan','Mozambique','Pakistan','Peru','USA','India'];
-      const cVals = [];
-      let baseCountry = 800000 * mul;
-      for(let i=0; i<10; i++) {
-        cVals.push(Math.floor(baseCountry));
-        baseCountry *= (0.7 + Math.random()*0.1); 
-      }
-      
-      // Color gradient engine
-      const barColors = cVals.map((v, i) => {
-        // Red #ff3b3b -> Amber #ffb340
-        // Interpolate over 10 points simply
-        const pct = i / 9;
-        const r1 = 255, g1 = 59, b1 = 59; // red
-        const r2 = 255, g2 = 179, b2 = 64; // amber
-        const rr = Math.round(r1 + (r2-r1)*pct);
-        const rg = Math.round(g1 + (g2-g1)*pct);
-        const rb = Math.round(b1 + (b2-b1)*pct);
-        return `rgba(${rr},${rg},${rb},0.9)`;
-      });
-
-      if(barChart) {
-        barChart.data.datasets[0].data = cVals;
-        barChart.data.datasets[0].backgroundColor = barColors;
-        barChart.update();
-      } else {
-        const ctxB = document.getElementById('barChart').getContext('2d');
-        barChart = new Chart(ctxB, {
-          type: 'bar',
-          data: {
-            labels: cList,
-            datasets: [{
-              label: 'Affected Population',
-              data: cVals,
-              backgroundColor: barColors,
-              borderRadius: 4,
-              borderWidth: 0
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { color: '#2B1B10' }, ticks: { callback: (v)=> (v/1000)+'k' } },
-              y: { grid: { display: false } }
-            }
-          }
-        });
-      }
-
-      // 4. Doughnut Gen
-      const pieT = ['Flood','Earthquake','Wildfire','Cyclone','Heatwave','Other'];
-      const pieD = [
-        Math.floor(45*mul), Math.floor(30*mul), Math.floor(22*mul), 
-        Math.floor(18*mul), Math.floor(15*mul), Math.floor(12*mul)
-      ];
-      totalPieCount = pieD.reduce((a,b)=>a+b, 0);
-
-      if(pieChart) {
-        pieChart.data.datasets[0].data = pieD;
-        pieChart.update();
-      } else {
-        const ctxP = document.getElementById('pieChart').getContext('2d');
-        pieChart = new Chart(ctxP, {
-          type: 'doughnut',
-          data: {
-            labels: pieT,
-            datasets: [{
-              data: pieD,
-              backgroundColor: ['#FF5500', '#ff3b3b', '#ffb340', '#9c27b0', '#ff8800', '#5c6bc0'],
-              borderWidth: 1, borderColor: '#0a0e1a',
-              hoverOffset: 4
-            }]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            cutout: '75%',
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 16 } } }
-          }
-        });
-      }
-
-      // 5. Build Calendar Grid Native Data
-      const calGrid = document.getElementById('cal-grid');
-      let cellsHtml = '';
-      
-      const now = new Date();
-      now.setUTCHours(0,0,0,0);
-      
-      const oneYearAgo = new Date(now);
-      oneYearAgo.setUTCDate(now.getUTCDate() - 364);
-
-      // Weights
-      for(let i=0; i<364; i++) {
-        const curDate = new Date(oneYearAgo);
-        curDate.setUTCDate(oneYearAgo.getUTCDate() + i);
-        const iso = curDate.toISOString().split('T')[0];
-
-        // determine severity mock logic
-        let sev = 0;
-        const rDrop = Math.random();
-        
-        if (timeFactor < 300 && i < (364 - timeFactor)) {
-           // Not active domain inside our filter scale technically
-           sev = 0;
-        } else {
-          if (rDrop > 0.95) sev = 5;
-          else if (rDrop > 0.88) sev = 4;
-          else if (rDrop > 0.70) sev = 3;
-          else if (rDrop > 0.40) sev = Math.floor(Math.random()*2)+1; // 1 or 2
-        }
-
-        const clsStr = sev === 0 ? 'sev-0' : (sev <= 2 ? 'sev-1' : `sev-${sev}`);
-        const tipStr = `Date: ${iso}&#10;Severity Level: ${sev}`;
-        cellsHtml += `<div class="cal-cell ${clsStr}" title="${tipStr}"></div>`;
-      }
-      calGrid.innerHTML = cellsHtml;
-      
-    } // end logic
-
-    // Init All Maps Default 1Yr (365)
-    generateRandomDataUpdate(365);
-
-    // Clock
-    setInterval(() => {
-      const ts = document.getElementById('timestamp');
-      if(ts) {
-        const d = new Date();
-        const p = n => n.toString().padStart(2, '0');
-        ts.innerText = `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`;
-      }
-    }, 1000);
-
-  </script>
-
-    <script>
-      /* ── Auth helpers ── */
-      function ccLogout() {
-        localStorage.removeItem('cc_token');
-        localStorage.removeItem('cc_user');
-        sessionStorage.removeItem('cc_token');
-        sessionStorage.removeItem('cc_user');
-        window.location.replace('login.html');
-      }
-      (function() {
-        var user = localStorage.getItem('cc_user') || sessionStorage.getItem('cc_user') || '';
-        var el = document.getElementById('nav-user');
-        if (el && user) el.textContent = user.split('@')[0].toUpperCase();
-      })();
-    </script>
+  <!-- Page Logic -->
+  <script src="js/analytics.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@ FILES = [
     'simulate.html',
     'analytics.html',
     'alerts.html',
+    'emergency.html',
 ]
 
 # ── Auth guard: injected just before </head> ──

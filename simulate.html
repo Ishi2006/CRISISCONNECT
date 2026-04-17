@@ -13,169 +13,12 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
-  <style>
-    :root {
-      --bg: #0a0e1a;
-      --bg2: #110D0A;
-      --card: #1A1008;
-      --cyan: #FF5500;
-      --red: #ff3b3b;
-      --amber: #ffb340;
-      --green: #00e676;
-      --text: #e8eaf6;
-      --muted: #A08870;
-      --border: #2B1B10;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    h1, h2, h3, h4, h5, h6 { font-family: 'Rajdhani', sans-serif; }
-    .data-font { font-family: 'Share Tech Mono', monospace; }
-    
-    /* Navbar */
-    .navbar { height: 56px; flex-shrink: 0; background-color: var(--bg2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 1000; }
-    .nav-left { display: flex; align-items: center; gap: 10px; }
-    .nav-left svg { width: 24px; height: 24px; color: var(--cyan); }
-    .nav-left h1 { font-size: 20px; margin: 0; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; }
-    .brand-crisis { color: var(--cyan); }
-    .brand-connect { color: #fff; }
-    .nav-center { flex: 1; display: flex; justify-content: center; }
-    .search-input { background-color: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 16px 8px 40px; border-radius: 20px; width: 400px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" stroke="%23A08870" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; }
-    .search-input:focus { border-color: var(--cyan); }
-    .search-input::placeholder { color: var(--muted); }
-    .nav-right { display: flex; align-items: center; gap: 24px; }
-    .bell-icon { position: relative; display: flex; align-items: center; }
-    .bell-icon svg { width: 20px; height: 20px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
-    .bell-icon:hover svg { color: var(--text); }
-    .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: white; font-size: 10px; font-weight: bold; font-family: 'Share Tech Mono', monospace; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-    
-    /* Layout */
-    .app-shell { display: flex; flex: 1; overflow: hidden; position: relative; }
-    
-    /* Sidebar */
-    .sidebar { width: 60px; flex-shrink: 0; background-color: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 16px; z-index: 900; }
-    .sidebar-btn { width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-left: 3px solid transparent; color: var(--muted); transition: all 0.2s; text-decoration: none; }
-    .sidebar-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-    .sidebar-btn.active { border-left-color: var(--cyan); color: var(--cyan); background: rgba(255, 85, 0, 0.05); }
-    .sidebar-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-    /* Map Layout */
-    .main-content { flex: 1; position: relative; background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
-    #map { flex: 1; height: 100%; z-index: 1; background: var(--bg); cursor: default; }
-    .map-placement-mode { cursor: crosshair !important; }
-
-    /* Left Panel: Simulation Engine */
-    .engine-panel { width: 380px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; overflow-y: auto; position: relative; }
-    
-    .panel-header { padding: 24px 24px 16px; border-bottom: 1px solid var(--border); background: var(--bg); position: relative; overflow: hidden; }
-    .panel-header h2 { font-size: 18px; color: var(--cyan); text-transform: uppercase; margin: 0; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-    .panel-header h2 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
-    .scan-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--cyan); opacity: 0.15; box-shadow: 0 0 10px var(--cyan); animation: scan 3s linear infinite; pointer-events: none; }
-    @keyframes scan { 0% { top: -10px; } 100% { top: 100%; } }
-
-    .engine-form { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
-    .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
-
-    /* Custom Form Elements */
-    .sys-select { appearance: none; background: rgba(14, 9, 5, 0.8) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23A08870" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat right 12px center; border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 4px; font-family: 'DM Sans'; font-size: 14px; cursor: pointer; outline: none; transition: border-color 0.2s; }
-    .sys-select:focus { border-color: var(--cyan); box-shadow: 0 0 8px rgba(255,85,0,0.2); }
-    .sys-select option { background: var(--bg2); color: #fff; }
-
-    .sys-input { appearance: none; background: rgba(14, 9, 5, 0.8); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 4px; font-family: 'Share Tech Mono'; font-size: 14px; outline: none; transition: border-color 0.2s; }
-    .sys-input::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.6); cursor: pointer; }
-    .sys-input:focus { border-color: var(--cyan); }
-
-    /* Range Slider */
-    .sev-header { display: flex; justify-content: space-between; align-items: center; }
-    .sev-val-large { font-family: 'Share Tech Mono'; font-size: 28px; font-weight: bold; line-height: 1; }
-    .sys-range { -webkit-appearance: none; width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; outline: none; margin: 10px 0; }
-    .sys-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-    .sev-label { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1px; }
-
-    /* Map Set Button */
-    .btn-set-map { background: transparent; border: 2px dashed var(--cyan); color: var(--cyan); padding: 10px; border-radius: 4px; font-family: 'Rajdhani'; font-size: 14px; font-weight: 700; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; letter-spacing: 1px; }
-    .btn-set-map:hover { background: rgba(255,85,0,0.1); }
-    .btn-set-map.active { background: var(--cyan); color: var(--bg); border-style: solid; box-shadow: 0 0 15px rgba(255,85,0,0.4); }
-    .coord-display { font-family: 'Share Tech Mono'; font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
-
-    /* Pills / Toggles */
-    .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
-    .pill-btn { flex: 1; min-width: 70px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; text-align: center; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
-    .pill-btn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
-    .pill-btn.active { background: rgba(255, 85, 0, 0.1); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(255,85,0,0.1); }
-    .terrain-group .pill-btn { border-radius: 4px; }
-
-    /* Run Button */
-    .btn-run { background: rgba(255, 85, 0, 0.1); border: 1px solid var(--cyan); color: var(--cyan); font-family: 'Rajdhani'; font-size: 16px; font-weight: 700; letter-spacing: 3px; padding: 16px; border-radius: 6px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; position: relative; overflow: hidden; margin-top: 10px; }
-    .btn-run:hover { background: rgba(255, 85, 0, 0.2); box-shadow: 0 0 20px rgba(255,85,0,0.25); text-shadow: 0 0 8px rgba(255,85,0,0.8); }
-    .btn-run.loading { border-color: var(--muted); color: var(--muted); cursor: default; background: transparent; }
-    .btn-scan { position: absolute; top: 0; bottom: 0; left: -20px; width: 10px; background: rgba(255,255,255,0.8); filter: blur(4px); opacity: 0; transform: skewX(-20deg); }
-    .btn-run.loading .btn-scan { animation: buttonScan 1.5s infinite linear; opacity: 0.5; }
-    @keyframes buttonScan { 0% { left: -10%; } 100% { left: 110%; } }
-
-    .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: -12px; display: none; }
-    .progress-fill { height: 100%; background: var(--cyan); width: 0%; box-shadow: 0 0 10px var(--cyan); }
-
-    /* Results Box */
-    .sim-results { margin-top: 16px; background: rgba(0,230,118,0.05); border: 1px solid var(--green); border-radius: 6px; padding: 20px; display: none; flex-direction: column; gap: 16px; transform: translateY(20px); opacity: 0; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s; }
-    .sim-results.show { transform: translateY(0); opacity: 1; display: flex; }
-    
-    .res-head { font-family: 'Rajdhani'; font-size: 16px; color: var(--green); margin: 0; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-    .res-grid { display: flex; flex-direction: column; gap: 12px; }
-    .res-item { display: flex; flex-direction: column; gap: 2px; }
-    .res-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-    .res-val { font-family: 'Share Tech Mono'; font-size: 18px; font-weight: bold; }
-    .res-val.c-cyan { color: var(--cyan); }
-    .res-val.c-amber { color: var(--amber); }
-    .res-val.c-red { color: var(--red); }
-    .res-fine { font-size: 10px; color: rgba(160, 136, 112, 0.5); font-style: italic; margin-top: 8px; }
-
-    /* Comparison Panel Overlay (Slides up on map) */
-    .compare-panel { position: absolute; bottom: 0; left: 380px; right: 0; height: 200px; background: rgba(10, 6, 3, 0.95); border-top: 1px solid var(--border); z-index: 1000; transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding: 20px 40px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
-    .compare-panel.show { transform: translateY(0); }
-    
-    .comp-header { font-family: 'Rajdhani'; font-size: 16px; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .comp-legend { display: flex; gap: 16px; font-size: 11px; font-family: 'DM Sans'; color: var(--muted); }
-    .leg-item { display: flex; align-items: center; gap: 6px; }
-    .leg-bx { width: 12px; height: 12px; border-radius: 2px; }
-    
-    .comp-grid { display: flex; justify-content: space-between; gap: 40px; flex: 1; }
-    .comp-col { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
-    .comp-lbl { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
-    
-    .chart-dual { width: 100%; display: flex; flex-direction: column; gap: 6px; }
-    .chart-bar-wrap { width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 2px; display: flex; position: relative; }
-    .chart-bar { height: 100%; border-radius: 2px; transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1); width: 0%; display: flex; align-items: center; }
-    .cb-sim { background: var(--cyan); box-shadow: 0 0 8px rgba(255,85,0,0.4); z-index: 2; position: absolute; }
-    .cb-hist { background: rgba(160, 136, 112, 0.4); position: absolute; z-index: 1; }
-    
-    /* Map overlays logic */
-    .flow-path { stroke-dasharray: 6 12; animation: flowDash 1s linear infinite; }
-    @keyframes flowDash { to { stroke-dashoffset: -18; } }
-
-    /* Custom Leaflet Controls */
-    .leaflet-control-zoom { border: 1px solid var(--border) !important; background: var(--bg2) !important; filter: invert(1) hue-rotate(180deg); margin-bottom: 220px !important; }
-
-    /* Status Bar */
-    .status-bar { height: 30px; flex-shrink: 0; background-color: var(--bg2); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; z-index: 1000; }
-  </style>
-  <script>
-    (function() {
-      var token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
-      if (!token) { window.location.replace('login.html'); }
-    })();
-  </script>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  
+  <!-- Page Specific Styles -->
+  <link rel="stylesheet" href="css/simulate.css">
 </head>
 <body>
   
@@ -193,9 +36,9 @@
       <div class="bell-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><div class="badge data-font">3</div></div>
       <div class="live-status"><div class="live-dot"></div> ENGINE READY</div>
     </div>
-      <div class="nav-right-extra" style="display:flex;align-items:center;gap:16px;margin-left:8px;">
-      <span class="mono" id="nav-user" style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;"></span>
-      <button onclick="ccLogout()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">⏏ LOGOUT</button>
+    <div class="nav-right-extra">
+      <span class="mono" id="nav-user"></span>
+      <button onclick="ccLogout()">⏏ LOGOUT</button>
     </div>
   </nav>
 
@@ -223,8 +66,11 @@
       <a href="analytics.html" class="sidebar-btn" title="Analytics">
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
       </a>
-      <a href="alerts.html" class="sidebar-btn" title="Alerts" style="margin-top:auto; margin-bottom: 10px;">
+      <a href="alerts.html" class="sidebar-btn" title="Alerts">
         <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      </a>
+      <a href="emergency.html" class="sidebar-btn" title="Emergency" style="margin-top:auto; margin-bottom: 10px;">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
       </a>
     </aside>
 
@@ -388,257 +234,16 @@
     </div>
   </div>
 
+  <!-- Status Bar -->
   <div class="status-bar">
     <div>LAST UPDATED: <span id="timestamp" class="data-font"></span></div>
     <div>CRISISCONNECT v1.0 | VIEW : PREDICTIVE SIMULATOR</div>
   </div>
 
-  <script>
-    // Map setup
-    const map = L.map('map', { zoomControl: false }).setView([20, 0], 3);
-    L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    L.control.zoom({ position: 'bottomleft' }).addTo(map);
+  <!-- Auth Script -->
+  <script src="js/auth.js"></script>
 
-    let epicMarker = null;
-    let epicLat = 35.0, epicLng = 25.0; // Default
-    let isPlacementMode = false;
-    
-    // UI Elements
-    const btnSet = document.getElementById('btn-set');
-    const coordDisp = document.getElementById('coord-disp');
-    
-    // Toggle placement
-    btnSet.addEventListener('click', () => {
-      isPlacementMode = !isPlacementMode;
-      if(isPlacementMode) {
-        btnSet.classList.add('active');
-        btnSet.querySelector('span').innerText = 'CLICK ON MAP';
-        document.getElementById('map').classList.add('map-placement-mode');
-      } else {
-        btnSet.classList.remove('active');
-        btnSet.querySelector('span').innerText = 'CLICK MAP TO SET';
-        document.getElementById('map').classList.remove('map-placement-mode');
-      }
-    });
-
-    map.on('click', (e) => {
-      if(!isPlacementMode) return;
-      epicLat = e.latlng.lat; epicLng = e.latlng.lng;
-      
-      if(epicMarker) map.removeLayer(epicMarker);
-      const crossIcon = L.divIcon({
-        html: '<svg viewBox="0 0 24 24" style="color:var(--cyan); filter:drop-shadow(0 0 5px var(--cyan))"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/></svg>',
-        className: '', iconSize: [24,24], iconAnchor: [12,12]
-      });
-      epicMarker = L.marker([epicLat, epicLng], {icon: crossIcon}).addTo(map);
-      
-      coordDisp.innerText = `LAT: ${epicLat.toFixed(4)} | LNG: ${epicLng.toFixed(4)}`;
-      
-      isPlacementMode = false;
-      btnSet.classList.remove('active');
-      btnSet.querySelector('span').innerText = 'LOCATION SET';
-      document.getElementById('map').classList.remove('map-placement-mode');
-    });
-
-    // Date pre-fill
-    const now = new Date();
-    document.getElementById('sim-date').value = now.toISOString().slice(0,16);
-
-    // Slider logic
-    const sevSlider = document.getElementById('sev-slider');
-    const sevDisp = document.getElementById('sev-disp');
-    const sevLbl = document.getElementById('sev-lbl');
-    
-    const sevMap = {
-      1: { l: 'MINOR', c: 'var(--green)' },
-      2: { l: 'LOW', c: 'var(--green)' },
-      3: { l: 'MODERATE', c: 'var(--amber)' },
-      4: { l: 'SEVERE', c: 'var(--red)' },
-      5: { l: 'CATASTROPHIC', c: 'var(--red)' }
-    };
-
-    sevSlider.addEventListener('input', (e) => {
-      const v = e.target.value;
-      const m = sevMap[v];
-      sevDisp.innerText = v;
-      sevDisp.style.color = m.c;
-      sevLbl.innerText = m.l;
-      sevLbl.style.color = m.c;
-      
-      const pct = (v - 1) / 4 * 100;
-      sevSlider.style.background = `linear-gradient(to right, ${m.c} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`;
-    });
-
-    // Pill logic
-    function setupPills(groupId) {
-      const group = document.getElementById(groupId);
-      const pills = group.querySelectorAll('.pill-btn');
-      pills.forEach(p => {
-        p.addEventListener('click', () => {
-          pills.forEach(x => x.classList.remove('active'));
-          p.classList.add('active');
-        });
-      });
-    }
-    setupPills('grp-density');
-    setupPills('grp-terrain');
-
-    function getActiveVal(groupId) {
-      return parseFloat(document.querySelector(`#${groupId} .active`).dataset.val);
-    }
-
-    // MAP LAYERS Store
-    let drawnLayers = L.layerGroup().addTo(map);
-    let heatLayer = null;
-
-    // Simulation Execution Engine
-    const btnRun = document.getElementById('btn-run');
-    const progWrap = document.getElementById('prog-wrap');
-    const progFill = document.getElementById('prog-fill');
-    const resBox = document.getElementById('sim-results');
-    const compPanel = document.getElementById('comp-panel');
-
-    function clearMapSimulation() {
-      drawnLayers.clearLayers();
-      if(heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
-    }
-
-    btnRun.addEventListener('click', () => {
-      if(btnRun.classList.contains('loading')) return;
-      if(!epicMarker) { alert("Please set Epicenter Location first."); return; }
-
-      // Hide results temporarily
-      resBox.classList.remove('show');
-      compPanel.classList.remove('show');
-      clearMapSimulation();
-
-      // UI State update
-      btnRun.classList.add('loading');
-      btnRun.innerHTML = 'CALCULATING<span class="btn-scan"></span>';
-      progWrap.style.display = 'block';
-      progFill.style.width = '0%';
-      progFill.style.transition = 'width 2s cubic-bezier(0.16, 1, 0.3, 1)';
-      
-      // Map sequence
-      map.flyTo([epicLat, epicLng], 8, {duration: 1.5});
-
-      // Data Calc
-      const sev = parseInt(sevSlider.value);
-      const densityMultiplier = getActiveVal('grp-density');
-      const terrainMultiplier = getActiveVal('grp-terrain');
-
-      const baseAffected = Math.floor(sev * sev * densityMultiplier * 50000);
-      const impactRadiusKm = Math.floor(sev * 25 * terrainMultiplier);
-      const displaced = Math.floor(baseAffected * 0.3);
-      const respWindow = Math.max(6, 72 - (sev * 12));
-
-      setTimeout(() => { progFill.style.width = '100%'; }, 50);
-
-      // Trigger completion after 2s loading
-      setTimeout(() => {
-        btnRun.classList.remove('loading');
-        btnRun.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> RUN SIMULATION';
-        progWrap.style.display = 'none';
-
-        // 1. Draw Expanding Circles
-        const c1 = L.circle([epicLat, epicLng], {
-          color: '#ff3b3b', fillColor: '#ff3b3b', fillOpacity: 0.2, weight: 2, radius: 1000
-        }).addTo(drawnLayers);
-
-        const targetRadius = impactRadiusKm * 1000;
-        let r = 1000;
-        const animStep = targetRadius / 30; // 30 frames
-        const intv = setInterval(() => {
-          r += animStep;
-          if(r >= targetRadius) {
-            r = targetRadius;
-            clearInterval(intv);
-            
-            // 2. Draw Buffer Circle
-            L.circle([epicLat, epicLng], {
-              color: 'transparent', fillColor: '#ffb340', fillOpacity: 0.1, radius: targetRadius * 1.5
-            }).addTo(drawnLayers);
-
-            // 3. Draw Heatmap
-            const pts = [];
-            const pCount = Math.floor(baseAffected / 5000) + 10;
-            for(let i=0; i<pCount; i++) {
-              const ang = Math.random() * Math.PI * 2;
-              const dist = Math.random() * (impactRadiusKm / 111); // approx degrees
-              pts.push([epicLat + dist*Math.cos(ang), epicLng + dist*Math.sin(ang), Math.random()]);
-            }
-            heatLayer = L.heatLayer(pts, { radius: 30, blur: 20, maxZoom: 8, gradient: {0.4:'blue', 0.6:'cyan', 0.8:'yellow', 1.0:'red'} }).addTo(map);
-
-            // 4. Animated Outward Arrows
-            const angles = [0, 90, 180, 270];
-            angles.forEach(deg => {
-              const rad = deg * Math.PI/180;
-              const maxD = (targetRadius*2) / 111000; 
-              L.polyline([[epicLat, epicLng], [epicLat + maxD*Math.cos(rad), epicLng + maxD*Math.sin(rad)]], {
-                color: '#FF5500', weight: 3, className: 'flow-path', opacity: 0.8
-              }).addTo(drawnLayers);
-            });
-
-          }
-          c1.setRadius(r);
-        }, 16);
-
-        // Populate Results Panel
-        document.getElementById('res-aff').innerText = baseAffected.toLocaleString();
-        document.getElementById('res-rad').innerText = impactRadiusKm + ' km';
-        document.getElementById('res-disp').innerText = displaced.toLocaleString();
-        document.getElementById('res-win').innerText = respWindow + ' HRS';
-        document.getElementById('res-hist').innerText = `Based on historical data from ${Math.floor(Math.random()*40+10)} similar events.`;
-        
-        resBox.classList.add('show');
-
-        // Populate and show Compare Panel
-        const hBase = baseAffected * (0.6 + Math.random()*0.8);
-        document.getElementById('cb-s1').style.width = '100%';
-        document.getElementById('cb-h1').style.width = Math.min(100, (hBase/baseAffected)*100) + '%';
-        
-        const hDisp = displaced * (0.5 + Math.random()*0.9);
-        document.getElementById('cb-s2').style.width = '100%';
-        document.getElementById('cb-h2').style.width = Math.min(100, (hDisp/displaced)*100) + '%';
-
-        document.getElementById('cb-s3').style.width = (sev * 15) + '%';
-        document.getElementById('cb-h3').style.width = (sev * 12) + '%';
-        
-        document.getElementById('cb-s4').style.width = (sev * Math.min(densityMultiplier, 2.0) * 15) + '%';
-        document.getElementById('cb-h4').style.width = (sev * 1.5 * 10) + '%';
-
-        setTimeout(() => { compPanel.classList.add('show'); }, 500);
-
-      }, 2000);
-
-
-    });
-
-    // Clock
-    setInterval(() => {
-      const ts = document.getElementById('timestamp');
-      if(ts) {
-        const d = new Date();
-        const p = n => n.toString().padStart(2, '0');
-        ts.innerText = `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`;
-      }
-    }, 1000);
-  </script>
-
-    <script>
-      /* ── Auth helpers ── */
-      function ccLogout() {
-        localStorage.removeItem('cc_token');
-        localStorage.removeItem('cc_user');
-        sessionStorage.removeItem('cc_token');
-        sessionStorage.removeItem('cc_user');
-        window.location.replace('login.html');
-      }
-      (function() {
-        var user = localStorage.getItem('cc_user') || sessionStorage.getItem('cc_user') || '';
-        var el = document.getElementById('nav-user');
-        if (el && user) el.textContent = user.split('@')[0].toUpperCase();
-      })();
-    </script>
+  <!-- Page Logic -->
+  <script src="js/simulate.js"></script>
 </body>
 </html>

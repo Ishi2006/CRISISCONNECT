@@ -9,142 +9,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-  <style>
-    :root {
-      --bg: #0a0e1a;
-      --bg2: #110D0A;
-      --card: #1A1008;
-      --cyan: #FF5500;
-      --red: #ff3b3b;
-      --amber: #ffb340;
-      --green: #00e676;
-      --text: #e8eaf6;
-      --muted: #A08870;
-      --border: #2B1B10;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    h1, h2, h3, h4, h5, h6 { font-family: 'Rajdhani', sans-serif; }
-    .data-font { font-family: 'Share Tech Mono', monospace; }
-    
-    /* Navbar */
-    .navbar { height: 56px; flex-shrink: 0; background-color: var(--bg2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 1000; }
-    .nav-left { display: flex; align-items: center; gap: 10px; }
-    .nav-left svg { width: 24px; height: 24px; color: var(--cyan); }
-    .nav-left h1 { font-size: 20px; margin: 0; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; }
-    .brand-crisis { color: var(--cyan); }
-    .brand-connect { color: #fff; }
-    .nav-center { flex: 1; display: flex; justify-content: center; }
-    .search-input { background-color: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 16px 8px 40px; border-radius: 20px; width: 400px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" stroke="%23A08870" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; }
-    .search-input:focus { border-color: var(--cyan); }
-    .search-input::placeholder { color: var(--muted); }
-    .nav-right { display: flex; align-items: center; gap: 24px; }
-    .bell-icon { position: relative; display: flex; align-items: center; }
-    .bell-icon svg { width: 20px; height: 20px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
-    .bell-icon:hover svg { color: var(--text); }
-    .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: white; font-size: 10px; font-weight: bold; font-family: 'Share Tech Mono', monospace; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-    
-    /* App Shell */
-    .app-shell { display: flex; flex: 1; overflow: hidden; position: relative; }
-    
-    /* Sidebar */
-    .sidebar { width: 60px; flex-shrink: 0; background-color: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 16px; z-index: 900; }
-    .sidebar-btn { width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-left: 3px solid transparent; color: var(--muted); transition: all 0.2s; text-decoration: none; }
-    .sidebar-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-    .sidebar-btn.active { border-left-color: var(--cyan); color: var(--cyan); background: rgba(255, 85, 0, 0.05); }
-    .sidebar-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    
-    /* Main Layout */
-    .main-content { flex: 1; display: flex; position: relative; background: var(--bg); }
-    #map { flex: 1; height: 100%; z-index: 1; background: var(--bg); }
-    .right-panel { width: 340px; flex-shrink: 0; background: var(--bg2); border-left: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; overflow-y: auto; }
-    
-    /* Leaflet Overrides */
-    .leaflet-container { background: var(--bg) !important; font-family: 'DM Sans', sans-serif; }
-    .leaflet-control-zoom { border: 1px solid var(--border) !important; background: var(--bg2) !important; filter: invert(1) hue-rotate(180deg); }
-    .leaflet-popup-content-wrapper { background: rgba(14, 9, 5, 0.95); color: #fff; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-family: 'DM Sans'; }
-    .leaflet-popup-tip { background: rgba(14, 9, 5, 0.95); border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
-    .leaflet-popup-content h3 { margin: 0 0 4px 0; font-family: 'Rajdhani'; color: var(--cyan); text-transform: uppercase; font-size: 16px; }
-    .leaflet-popup-content p { margin: 0; font-size: 12px; color: var(--muted); }
-    .leaflet-popup-content .pop-num { color: #fff; font-family: 'Share Tech Mono'; font-size: 16px; margin-left: 4px;}
-
-    /* Route Animations */
-    .route-path { stroke-dasharray: 8, 12; animation: flow 1s linear infinite; }
-    .route-hidden path { opacity: 0; transition: opacity 0.4s; }
-    .route-visible path { opacity: 1; }
-    .route-path-flow { animation: flow 1.2s linear infinite; }
-    .route-highlight path { stroke: var(--cyan) !important; animation: flow 0.5s linear infinite !important; stroke-width: 3px !important; }
-    
-    @keyframes flow { to { stroke-dashoffset: -20; } }
-
-    /* Map Controls UI */
-    .map-controls-top { position: absolute; top: 20px; left: 20px; z-index: 1000; display: flex; gap: 8px; }
-    .btn-play-pause { background: rgba(14, 9, 5, 0.9); border: 1px solid var(--border); color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; padding: 10px 16px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.4); text-transform: uppercase; letter-spacing: 1px; }
-    .btn-play-pause:hover { background: var(--bg2); border-color: var(--cyan); color: var(--cyan); }
-    .btn-play-pause svg { width: 16px; height: 16px; fill: currentColor; stroke: none; }
-
-    /* Right Panel UI */
-    .panel-header { padding: 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(14, 9, 5, 0.95); backdrop-filter: blur(8px); z-index: 20; }
-    .panel-header h2 { font-size: 22px; color: var(--cyan); margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px; }
-    .panel-header p { font-size: 14px; color: #fff; margin: 0; font-weight: 500; }
-
-    .panel-content { padding: 24px; display: flex; flex-direction: column; gap: 32px; }
-
-    .stat-card { background: rgba(43, 27, 16, 0.2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-align: center; }
-    .stat-card-title { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .stat-card-val { font-size: 42px; color: var(--amber); font-weight: 700; text-shadow: 0 0 16px rgba(255,179,64,0.3); }
-
-    .section-title { font-size: 14px; color: #fff; font-family: 'Rajdhani'; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; }
-
-    /* Origin Bars */
-    .origin-list { display: flex; flex-direction: column; gap: 16px; }
-    .origin-item { display: flex; flex-direction: column; gap: 6px; }
-    .origin-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--text); }
-    .origin-count { font-family: 'Share Tech Mono'; color: var(--muted); }
-    .origin-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
-    .origin-bar-fill { height: 100%; background: linear-gradient(90deg, #ff3b3b, #ffb340); border-radius: 3px; box-shadow: 0 0 8px rgba(255,59,59,0.5); }
-
-    /* Route List */
-    .route-list { display: flex; flex-direction: column; gap: 12px; }
-    .route-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
-    .route-item:hover { border-color: var(--amber); transform: translateY(-2px); }
-    .route-item.active { border-color: var(--cyan); background: rgba(255, 85, 0, 0.05); }
-    
-    .route-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .route-num { background: rgba(255,255,255,0.1); color: var(--text); font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-    .route-count { font-family: 'Share Tech Mono'; font-size: 14px; color: var(--amber); font-weight: bold; }
-    
-    .route-path-text { font-size: 13px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .route-arrow { color: var(--muted); font-size: 12px; }
-
-    /* Play Animation Button */
-    .play-anim-btn { width: 100%; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; padding: 12px; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
-    .play-anim-btn:hover { background: rgba(255, 85, 0, 0.1); box-shadow: 0 0 12px rgba(255,85,0,0.2); }
-    .play-anim-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-    /* Status Bar */
-    .status-bar { height: 30px; flex-shrink: 0; background-color: var(--bg2); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; z-index: 1000; }
-  </style>
-  <script>
-    (function() {
-      var token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
-      if (!token) { window.location.replace('login.html'); }
-    })();
-  </script>
+  <!-- Shared Styles -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  
+  <!-- Page Specific Styles -->
+  <link rel="stylesheet" href="css/displacement.css">
 </head>
 <body>
 
@@ -167,13 +41,13 @@
         <div class="badge data-font">3</div>
       </div>
       <div class="live-status">
-        <div class="live-dot" style="background-color: var(--green); box-shadow: 0 0 8px var(--green);"></div>
+        <div class="live-dot"></div>
         LIVE
       </div>
     </div>
-      <div class="nav-right-extra" style="display:flex;align-items:center;gap:16px;margin-left:8px;">
-      <span class="mono" id="nav-user" style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;"></span>
-      <button onclick="ccLogout()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">⏏ LOGOUT</button>
+    <div class="nav-right-extra">
+      <span class="mono" id="nav-user"></span>
+      <button onclick="ccLogout()">⏏ LOGOUT</button>
     </div>
   </nav>
 
@@ -201,8 +75,11 @@
       <a href="analytics.html" class="sidebar-btn" title="Analytics">
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
       </a>
-      <a href="alerts.html" class="sidebar-btn" title="Alerts" style="margin-top:auto; margin-bottom: 10px;">
+      <a href="alerts.html" class="sidebar-btn" title="Alerts">
         <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      </a>
+      <a href="emergency.html" class="sidebar-btn" title="Emergency" style="margin-top:auto; margin-bottom: 10px;">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
       </a>
     </aside>
 
@@ -262,281 +139,10 @@
     <div>CRISISCONNECT v1.0 | VIEW : DISPLACEMENT ROUTING</div>
   </div>
 
-  <!-- App Script -->
-  <script>
-    // Core Data
-    const DISASTERS = [
-      {id:1,name:"Türkiye Earthquake",type:"Earthquake",severity:5,lat:37.5,lng:36.8,affected:2400000},
-      {id:2,name:"Bangladesh Flooding",type:"Flood",severity:4,lat:23.8,lng:90.4,affected:890000},
-      {id:3,name:"California Wildfire",type:"Wildfire",severity:3,lat:34.0,lng:-118.2,affected:145000},
-      {id:4,name:"Mozambique Cyclone",type:"Cyclone",severity:4,lat:-19.8,lng:34.9,affected:670000},
-      {id:5,name:"Pakistan Heatwave",type:"Heatwave",severity:3,lat:30.3,lng:69.3,affected:320000},
-      {id:6,name:"Philippines Typhoon",type:"Typhoon",severity:5,lat:12.8,lng:122.5,affected:1200000},
-      {id:7,name:"Peru Landslides",type:"Landslide",severity:2,lat:-9.2,lng:-75.0,affected:45000}
-    ];
+  <!-- Auth Script -->
+  <script src="js/auth.js"></script>
 
-    // Read queries
-    const urlParams = new URLSearchParams(window.location.search);
-    const paramId = parseInt(urlParams.get('id'));
-    const d = DISASTERS.find(x => x.id === paramId) || DISASTERS[0];
-    
-    document.getElementById('sub-title').innerText = d.name;
-    const totalDisplaced = Math.floor(d.affected * 0.35);
-    document.getElementById('val-total').innerText = totalDisplaced.toLocaleString();
-
-    // Generate Route Data
-    function generateMockRoutes(disaster) {
-      const routes = [];
-      const o1 = { lat: disaster.lat, lng: disaster.lng, name: disaster.name.split(' ')[0] + ' Epicenter', count: Math.floor(totalDisplaced * 0.4) };
-      const o2 = { lat: disaster.lat + 0.5, lng: disaster.lng + 0.3, name: 'Surrounding Districts', count: Math.floor(totalDisplaced * 0.3) };
-      const o3 = { lat: disaster.lat - 0.4, lng: disaster.lng - 0.2, name: 'Coastal/Valley Areas', count: Math.floor(totalDisplaced * 0.3) };
-      
-      const origins = [o1, o2, o3];
-      origins.sort((a,b) => b.count - a.count);
-
-      const offsetDist = 1.5 + (disaster.severity * 0.5); // spread out based on severity
-
-      const destNames = ['Safe Zone Alpha', 'Relief Camp Beta', 'Capital City Metro', 'Inland Ridge', 'Southern Evac Hub'];
-      
-      for(let i=0; i<5; i++) {
-        const dest = {
-          lat: disaster.lat + ((Math.random()-0.5) * offsetDist),
-          lng: disaster.lng + ((Math.random()-0.5) * offsetDist),
-          name: destNames[i]
-        };
-        const originObj = origins[i % 3]; // pick an origin
-        
-        // Count for this route
-        const rCount = Math.floor(totalDisplaced * (0.05 + Math.random()*0.15));
-        
-        routes.push({
-          id: i+1,
-          origin: originObj,
-          dest: dest,
-          count: rCount
-        });
-      }
-      return { origins, routes };
-    }
-
-    const { origins, routes } = generateMockRoutes(d);
-
-    // Populate Right Panel - Origins
-    const originListHtml = origins.map(o => {
-      const pct = (o.count / totalDisplaced) * 100;
-      return `
-        <div class="origin-item">
-          <div class="origin-top">
-            <span>${o.name}</span>
-            <span class="origin-count">${o.count.toLocaleString()}</span>
-          </div>
-          <div class="origin-bar-bg">
-            <div class="origin-bar-fill" style="width: ${pct}%"></div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    document.getElementById('origin-list').innerHTML = originListHtml;
-
-    // Populate Right Panel - Routes
-    routes.sort((a,b) => b.count - a.count);
-    const routeListHtml = routes.map((r, idx) => `
-      <div class="route-item" data-idx="${idx}">
-        <div class="route-head">
-          <span class="route-num">${idx + 1}</span>
-          <span class="route-count">${r.count.toLocaleString()}</span>
-        </div>
-        <div class="route-path-text">
-          <span>${r.origin.name}</span>
-          <span class="route-arrow">▶</span>
-          <span style="color: var(--cyan)">${r.dest.name}</span>
-        </div>
-      </div>
-    `).join('');
-    document.getElementById('route-list').innerHTML = routeListHtml;
-
-
-    // --- Map Initialization ---
-    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([d.lat, d.lng], 6);
-    L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    L.control.zoom({ position: 'bottomleft' }).addTo(map);
-
-    const bounds = [];
-    const leafletRoutes = [];
-
-    // Draw Origins
-    const drawnOrigins = new Set();
-    routes.forEach((r, idx) => {
-      const oKey = r.origin.lat + ',' + r.origin.lng;
-      if(!drawnOrigins.has(oKey)) {
-        L.circle([r.origin.lat, r.origin.lng], {
-          color: '#ff3b3b', fillColor: '#ff3b3b', fillOpacity: 0.2, radius: 30000, weight: 2
-        }).bindPopup(`<h3>${r.origin.name}</h3><p>Departed: <span class="pop-num">${r.origin.count.toLocaleString()}</span></p>`)
-          .addTo(map);
-        bounds.push([r.origin.lat, r.origin.lng]);
-        drawnOrigins.add(oKey);
-      }
-
-      // Destinations
-      L.circle([r.dest.lat, r.dest.lng], {
-        color: '#00e676', fillColor: '#00e676', fillOpacity: 0.2, radius: 20000, weight: 2
-      }).bindPopup(`<h3>${r.dest.name}</h3><p>Incoming: <span class="pop-num">${r.count.toLocaleString()}</span></p>`)
-        .addTo(map);
-      bounds.push([r.dest.lat, r.dest.lng]);
-
-      // Polylines
-      const poly = L.polyline([[r.origin.lat, r.origin.lng], [r.dest.lat, r.dest.lng]], {
-        color: '#ffb340', weight: 2, className: 'route-path route-hidden',
-        dashArray: '8, 12'
-      }).addTo(map);
-
-      // Midpoint Arrow
-      const midLat = (r.origin.lat + r.dest.lat) / 2;
-      const midLng = (r.origin.lng + r.dest.lng) / 2;
-      
-      const p1 = map.latLngToLayerPoint([r.origin.lat, r.origin.lng]);
-      const p2 = map.latLngToLayerPoint([r.dest.lat, r.dest.lng]);
-      const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
-
-      const arrowIcon = L.divIcon({
-        className: '',
-        html: `<div style="transform: rotate(${angle}deg); color: #ffb340; display:flex; margin-top:-6px; margin-left:-6px;"><svg width="12" height="12" viewBox="0 0 24 24"><polygon fill="currentColor" points="5 3 19 12 5 21 5 3"></polygon></svg></div>`,
-        iconSize: [0, 0]
-      });
-      
-      const marker = L.marker([midLat, midLng], {icon: arrowIcon}).addTo(map);
-      marker.getElement().style.opacity = 0; // hide initially
-      marker.getElement().style.transition = 'opacity 0.4s';
-
-      leafletRoutes.push({ polyline: poly, arrow: marker, route: r });
-    });
-
-    if(bounds.length > 0) map.fitBounds(bounds, { padding: [60, 60] });
-
-    // Interactive route list
-    const routeDivs = document.querySelectorAll('.route-item');
-    routeDivs.forEach(div => {
-      div.addEventListener('click', () => {
-        routeDivs.forEach(d => d.classList.remove('active'));
-        div.classList.add('active');
-        
-        leafletRoutes.forEach(lr => lr.polyline.getElement().classList.remove('route-highlight'));
-        
-        const rItem = leafletRoutes[div.dataset.idx];
-        rItem.polyline.getElement().classList.add('route-visible');
-        rItem.polyline.getElement().classList.add('route-highlight');
-        rItem.arrow.getElement().style.opacity = 1;
-        
-        map.fitBounds([ 
-          [rItem.route.origin.lat, rItem.route.origin.lng], 
-          [rItem.route.dest.lat, rItem.route.dest.lng] 
-        ], { padding: [100, 100] });
-      });
-    });
-
-    // Play/Pause State
-    let isPlaying = false;
-    let animTimers = [];
-
-    const formatPlayBtn = (st) => {
-      const btn = document.getElementById('btn-play-pause');
-      if(st) {
-        btn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> PAUSE`;
-        btn.style.color = 'var(--cyan)';
-        btn.style.borderColor = 'var(--cyan)';
-      } else {
-        btn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> PLAY`;
-        btn.style.color = '#fff';
-        btn.style.borderColor = 'var(--border)';
-      }
-    };
-
-    function startSequentialAnimation() {
-      // Clear paths
-      leafletRoutes.forEach(lr => {
-        lr.polyline.getElement().classList.remove('route-visible', 'route-highlight');
-        lr.polyline.getElement().style.animationPlayState = 'running';
-        lr.arrow.getElement().style.opacity = 0;
-      });
-      routeDivs.forEach(d => d.classList.remove('active'));
-      animTimers.forEach(t => clearTimeout(t));
-      animTimers = [];
-
-      isPlaying = true;
-      formatPlayBtn(true);
-      map.fitBounds(bounds, { padding: [60, 60] });
-
-      leafletRoutes.forEach((lr, idx) => {
-        const timer = setTimeout(() => {
-          if(!isPlaying) return;
-          lr.polyline.getElement().classList.add('route-visible');
-          lr.arrow.getElement().style.opacity = 1;
-        }, 600 * (idx + 1));
-        animTimers.push(timer);
-      });
-      
-      const resetTimer = setTimeout(() => { if(isPlaying) pauseAnimation(); }, 600 * (leafletRoutes.length + 2));
-      animTimers.push(resetTimer);
-    }
-
-    function pauseAnimation() {
-      isPlaying = false;
-      formatPlayBtn(false);
-      leafletRoutes.forEach(lr => {
-        lr.polyline.getElement().style.animationPlayState = 'paused';
-      });
-    }
-
-    function resumeAnimation() {
-      isPlaying = true;
-      formatPlayBtn(true);
-      leafletRoutes.forEach(lr => {
-        lr.polyline.getElement().style.animationPlayState = 'running';
-      });
-    }
-
-    document.getElementById('btn-play-pause').addEventListener('click', () => {
-      if(!isPlaying) resumeAnimation();
-      else pauseAnimation();
-    });
-
-    document.getElementById('btn-anim-seq').addEventListener('click', startSequentialAnimation);
-
-    // Ensure all visible on init without motion
-    setTimeout(() => {
-      leafletRoutes.forEach(lr => {
-        lr.polyline.getElement().classList.add('route-visible');
-        lr.polyline.getElement().style.animationPlayState = 'paused';
-        lr.arrow.getElement().style.opacity = 1;
-      });
-    }, 500);
-
-    // Timestamp Update
-    function updateTimestamp() {
-      const ts = document.getElementById('timestamp');
-      const date = new Date();
-      const p = n => n.toString().padStart(2, '0');
-      ts.innerText = `${date.getUTCFullYear()}-${p(date.getUTCMonth()+1)}-${p(date.getUTCDate())} ${p(date.getUTCHours())}:${p(date.getUTCMinutes())}:${p(date.getUTCSeconds())} UTC`;
-    }
-    setInterval(updateTimestamp, 1000);
-    updateTimestamp();
-
-  </script>
-
-    <script>
-      /* ── Auth helpers ── */
-      function ccLogout() {
-        localStorage.removeItem('cc_token');
-        localStorage.removeItem('cc_user');
-        sessionStorage.removeItem('cc_token');
-        sessionStorage.removeItem('cc_user');
-        window.location.replace('login.html');
-      }
-      (function() {
-        var user = localStorage.getItem('cc_user') || sessionStorage.getItem('cc_user') || '';
-        var el = document.getElementById('nav-user');
-        if (el && user) el.textContent = user.split('@')[0].toUpperCase();
-      })();
-    </script>
+  <!-- Page Logic -->
+  <script src="js/displacement.js"></script>
 </body>
 </html>
