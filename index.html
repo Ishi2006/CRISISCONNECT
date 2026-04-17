@@ -299,12 +299,25 @@
         /* Navbar */
         .nav-header {
             position: fixed;
-            top: 30px;
-            left: 40px;
+            top: 0;
+            left: 0;
+            width: 100%;
             z-index: 1000;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            padding: 30px 40px;
+            background: linear-gradient(to bottom, rgba(10,10,15,0.8), transparent);
+            pointer-events: none;
+        }
+
+        .nav-header * { pointer-events: auto; }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
             gap: 15px;
+            text-decoration: none;
         }
 
         .logo {
@@ -316,6 +329,18 @@
         }
 
         .logo span { color: var(--accent); }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-nav {
+            padding: 8px 20px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -332,7 +357,13 @@
     <div id="starfield"></div>
 
     <header class="nav-header">
-        <div class="logo">CRISIS<span>CONNECT</span></div>
+        <a href="index.html?v=2.0" class="logo-wrap">
+            <div class="logo">CRISIS<span>CONNECT</span></div>
+        </a>
+        <div class="nav-actions" id="nav-actions">
+            <!-- Dynamic buttons injected via JS -->
+            <a href="login.html?v=2.0" class="btn btn-outline btn-nav">Operator Login</a>
+        </div>
     </header>
 
     <div class="globe-container" id="globe-wrap">
@@ -369,7 +400,7 @@
                 immersive disaster intelligence for a resilient tomorrow.
             </p>
             <div class="btn-group">
-                <a href="dashboard.html" class="btn btn-filled">Begin Journey</a>
+                <button class="btn btn-filled" onclick="window.location.href='dashboard.html?v=2.0'">Begin Journey</button>
                 <a href="#" class="btn btn-outline" onclick="scrollToSection(1)">Learn More</a>
             </div>
         </div>
@@ -416,8 +447,8 @@
                 Be part of the revolution in disaster resilience. The future of protection starts here.
             </p>
             <div class="btn-group" style="justify-content: center;">
-                <a href="login.html" class="btn btn-filled">Join the Movement</a>
-                <a href="dashboard.html" class="btn btn-outline">Explore More</a>
+                <a href="login.html?v=2.0" class="btn btn-filled">Join the Movement</a>
+                <a href="dashboard.html?v=2.0" class="btn btn-outline">Explore More</a>
             </div>
         </div>
     </section>
@@ -514,6 +545,23 @@
 
         window.addEventListener('resize', resizeHandler);
         resizeHandler();
+
+        // Session Awareness for Landing Page
+        function updateNavActions() {
+            const token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
+            const navActions = document.getElementById('nav-actions');
+            
+            if (token) {
+                navActions.innerHTML = `
+                    <a href="dashboard.html?v=2.0" class="btn btn-filled btn-nav">Go to Dashboard</a>
+                    <button onclick="ccLogout()" class="btn btn-outline btn-nav" style="border:none; padding: 0 10px;">⏏</button>
+                `;
+            } else {
+                navActions.innerHTML = `<a href="login.html?v=2.0" class="btn btn-outline btn-nav">Operator Login</a>`;
+            }
+        }
+        updateNavActions();
     </script>
+    <script src="js/auth.js?v=2.0"></script>
 </body>
 </html>

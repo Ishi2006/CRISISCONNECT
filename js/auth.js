@@ -6,10 +6,11 @@
 // 1. Auth Guard: Check for token on load
 (function() {
     const isLoginPage = window.location.pathname.endsWith('login.html');
+    const isLandingPage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/');
     const token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
 
-    if (!token && !isLoginPage) {
-        window.location.replace('login.html');
+    if (!token && !isLoginPage && !isLandingPage) {
+        window.location.replace('login.html?v=2.0');
     }
 })();
 
@@ -40,7 +41,7 @@ function ccLogout() {
     localStorage.removeItem('cc_user');
     sessionStorage.removeItem('cc_token');
     sessionStorage.removeItem('cc_user');
-    window.location.replace('login.html');
+    window.location.replace('login.html?v=2.0');
 }
 
 /**

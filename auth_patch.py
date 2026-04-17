@@ -16,7 +16,7 @@ FILES = [
 AUTH_GUARD = """  <script>
     (function() {
       var token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
-      if (!token) { window.location.replace('login.html'); }
+      if (!token) { window.location.replace('login.html?v=2.0'); }
     })();
   </script>"""
 
@@ -36,7 +36,7 @@ AUTH_LOGIC = """
         localStorage.removeItem('cc_user');
         sessionStorage.removeItem('cc_token');
         sessionStorage.removeItem('cc_user');
-        window.location.replace('login.html');
+        window.location.replace('login.html?v=2.0');
       }
       (function() {
         var user = localStorage.getItem('cc_user') || sessionStorage.getItem('cc_user') || '';

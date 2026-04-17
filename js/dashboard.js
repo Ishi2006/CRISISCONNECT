@@ -1,6 +1,6 @@
 /**
  * CrisisConnect Dashboard Logic
- * Handles Leaflet map initialization, disaster markers, and UI overlays.
+ * Handles Globe.gl 3D map initialization, disaster markers, and UI overlays.
  */
 
 const DISASTERS = [
@@ -13,67 +13,113 @@ const DISASTERS = [
     {id:7,name:"Peru Landslides",type:"Landslide",severity:2,lat:-9.2,lng:-75.0,affected:45000}
 ];
 
-let map, markersLayer, heatLayer;
+let globe;
 let heatmapActive = false;
-const bounds = DISASTERS.map(d => [d.lat, d.lng]);
 
 document.addEventListener('DOMContentLoaded', () => {
-    initMap();
+    initGlobe();
     updateStats();
     initControls();
+    initFeed(); // from previous widget logic via html integration
 });
 
-function initMap() {
-    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20, 0], 3);
-    
-    L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
-    
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+function initGlobe() {
+    const mapEl = document.getElementById('map');
+    // Ensure parent is styled so canvas covers it cleanly
+    mapEl.style.backgroundColor = '#050505';
 
-    markersLayer = L.layerGroup().addTo(map);
-    const heatPoints = [];
+    globe = Globe()(mapEl)
+        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+        .showAtmosphere(true)
+        .atmosphereColor('#ff4400')
+        .atmosphereAltitude(0.15)
+        .polygonAltitude(0.01)
+        .polygonSideColor(() => 'rgba(200, 50, 0, 0.1)')
+        .polygonStrokeColor(() => '#ff6600');
 
-    DISASTERS.forEach(d => {
-        let sevClass = d.severity === 5 ? 'sev-5' : (d.severity >= 3 ? 'sev-3' : 'sev-1');
-        
-        const iconHtml = `
-            <div class="pulse-marker ${sevClass}">
-                <div class="pulse-ring"></div>
-                <div class="pulse-dot"></div>
-                <div class="marker-label">${d.name}</div>
-            </div>
-        `;
-        
-        const icon = L.divIcon({
-            html: iconHtml,
-            className: '',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+    // Color schema for threat tracking aesthetic
+    const tl = {
+      'Algeria': '#114411', 'Mali': '#114411', 'Libya': '#882200', 'Egypt': '#551100', 'Sudan': '#cc4400',
+      'Saudi Arabia': '#882200', 'Iran': '#cc4400', 'Turkey': '#cc4400', 'Syria': '#882200', 'France': '#cc4400',
+      'Germany': '#ff8800', 'Ukraine': '#cc4400', 'Italy': '#551100'
+    };
+    const cPal = ['#1a331a', '#802b00', '#ba3800', '#1c1c1c'];
+
+    fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
+        .then(res => res.json())
+        .then(worldData => {
+            const countries = topojson.feature(worldData, worldData.objects.countries).features;
+            globe.polygonsData(countries)
+                 .polygonCapColor(d => {
+                     const nm = d.properties.NAME || d.properties.name;
+                     if(tl[nm]) return tl[nm];
+                     return cPal[(nm ? nm.charCodeAt(0) + nm.charCodeAt(nm.length-1) : 0) % cPal.length];
+                 });
         });
+
+    globe.controls().autoRotate = true;
+    globe.controls().autoRotateSpeed = 0.5;
+
+    renderDisasterLayers();
+
+    // Adjust widget canvas resizer properly
+    window.addEventListener('resize', () => {
+        globe.width(mapEl.clientWidth).height(mapEl.clientHeight);
+    });
+    setTimeout(() => globe.width(mapEl.clientWidth).height(mapEl.clientHeight), 100);
+
+    // Initial View over Eurasia / Middle East
+    globe.pointOfView({ lat: 25, lng: 45, altitude: 2.2 });
+}
+
+function renderDisasterLayers() {
+    if (heatmapActive) {
+        // Render Heatmap using highly saturated blurred rings
+        globe.htmlElementsData([]);
         
-        const marker = L.marker([d.lat, d.lng], {icon}).addTo(markersLayer);
-        marker.on('click', () => showSlidePanel(d, sevClass));
+        let heatData = [];
+        DISASTERS.forEach(d => {
+            const intensity = d.severity; // 1-5
+            heatData.push({ lat: d.lat, lng: d.lng, maxR: intensity * 2, color: intensity >= 4 ? '#ff003c' : '#ff8800' });
+            for(let i=0; i<3; i++) {
+                heatData.push({
+                    lat: d.lat + (Math.random()-0.5)*5, 
+                    lng: d.lng + (Math.random()-0.5)*5,
+                    maxR: intensity * 1.5,
+                    color: intensity >= 4 ? '#ff2200' : '#ff6600'
+                });
+            }
+        });
 
-        // Heatmap Data
-        const intensity = d.severity * 0.2;
-        heatPoints.push([d.lat, d.lng, intensity]);
-        for(let i=0; i<8; i++) {
-            heatPoints.push([
-                d.lat + (Math.random() - 0.5) * 5,
-                d.lng + (Math.random() - 0.5) * 5,
-                intensity * (0.2 + Math.random() * 0.4)
-            ]);
-        }
-    });
+        globe.ringsData(heatData)
+             .ringColor('color')
+             .ringMaxRadius('maxR')
+             .ringPropagationSpeed(1.5)
+             .ringRepeatPeriod(600);
 
-    heatLayer = L.heatLayer(heatPoints, {
-        radius: 40, blur: 25, maxZoom: 5,
-        gradient: {0.2: '#FF5500', 0.5: '#00e676', 0.8: '#ffb340', 1.0: '#ff3b3b'}
-    });
+    } else {
+        // Render functional interactive HTML markers replacing Leaflet divIcons
+        globe.ringsData([]);
 
-    setTimeout(() => map.fitBounds(bounds, { padding: [50, 50] }), 500);
+        globe.htmlElementsData(DISASTERS)
+             .htmlElement(d => {
+                 const el = document.createElement('div');
+                 let sevClass = d.severity === 5 ? 'sev-5' : (d.severity >= 3 ? 'sev-3' : 'sev-1');
+                 el.innerHTML = `
+                     <div class="pulse-marker ${sevClass}" style="transform: translate(-50%, -50%); cursor:pointer;">
+                         <div class="pulse-ring"></div>
+                         <div class="pulse-dot"></div>
+                         <div class="marker-label" style="pointer-events:none;">${d.name}</div>
+                     </div>
+                 `;
+                 el.style.pointerEvents = 'auto';
+                 el.onclick = () => {
+                     showSlidePanel(d, sevClass);
+                     globe.pointOfView({ lat: d.lat, lng: d.lng, altitude: 1.2 }, 1000);
+                 };
+                 return el;
+             });
+    }
 }
 
 function updateStats() {
@@ -105,20 +151,19 @@ function initControls() {
             if(heatmapActive) {
                 this.classList.add('active');
                 this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg> HEATMAP ON';
-                map.addLayer(heatLayer);
-                map.removeLayer(markersLayer);
             } else {
                 this.classList.remove('active');
                 this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg> HEATMAP OFF';
-                map.removeLayer(heatLayer);
-                map.addLayer(markersLayer);
             }
+            renderDisasterLayers();
         });
     }
 
     const btnFit = document.getElementById('btn-fit');
     if (btnFit) {
-        btnFit.addEventListener('click', () => map.fitBounds(bounds, { padding: [50, 50] }));
+        btnFit.addEventListener('click', () => {
+            globe.pointOfView({ lat: 25, lng: 45, altitude: 2.2 }, 1500);
+        });
     }
 
     const btnRefresh = document.getElementById('btn-refresh');
@@ -161,7 +206,27 @@ function showSlidePanel(d, sevClass) {
     }
     
     document.getElementById('p-affected').innerText = d.affected.toLocaleString();
-    document.getElementById('p-btn').href = 'disaster.html?id=' + d.id;
+    document.getElementById('p-btn').href = 'disaster.html?v=2.0&id=' + d.id;
     
     panel.classList.add('show');
+}
+
+// Relocated Live Feed Ticker functional logic from HTML
+function initFeed() {
+    const events = [
+      "SITUATION_RED: Khartoum sector unstable.",
+      "INTEL_UPDATE: Thermal signature detected.",
+      "ZONE_ALERT: Air defense active over Haifa.",
+      "NAV_NOTICE: Taiwan Strait movement."
+    ];
+    const feed = document.getElementById('live-feed-globe');
+    if (!feed) return;
+    setInterval(() => {
+        const text = events[Math.floor(Math.random() * events.length)];
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        feed.innerHTML = `<div class="event-item"><span class="event-time">[${time}]</span> <span class="event-text">${text}</span></div>` + feed.innerHTML;
+        if (feed.children.length > 5) feed.removeChild(feed.lastChild);
+    }, 4000);
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    feed.innerHTML = `<div class="event-item"><span class="event-time">[${time}]</span> <span class="event-text">SITLINK ESTABLISHED.</span></div>`;
 }
