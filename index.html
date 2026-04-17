@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRISIS CONNECT | Command Center</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #110D0A;
+      --card: #1A1008;
+      --cyan: #FF5500;
+      --red: #ff3b3b;
+      --amber: #ffb340;
+      --green: #00e676;
+      --text: #e8eaf6;
+      --muted: #A08870;
+      --border: #2B1B10;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6 { font-family: 'Rajdhani', sans-serif; }
+    .data-font { font-family: 'Share Tech Mono', monospace; }
+    
+    /* Navbar */
+    .navbar {
+      height: 56px;
+      flex-shrink: 0;
+      background-color: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+    
+    .nav-left { display: flex; align-items: center; gap: 10px; }
+    .nav-left svg { width: 24px; height: 24px; color: var(--cyan); }
+    .nav-left h1 { font-size: 20px; margin: 0; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; }
+    .brand-crisis { color: var(--cyan); }
+    .brand-connect { color: #fff; }
+    
+    .nav-center { flex: 1; display: flex; justify-content: center; }
+    .search-input {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px 8px 40px;
+      border-radius: 20px;
+      width: 400px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" fill="none" stroke="%23A08870" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>');
+      background-repeat: no-repeat;
+      background-position: 12px center;
+      background-size: 16px;
+    }
+    .search-input:focus { border-color: var(--cyan); }
+    .search-input::placeholder { color: var(--muted); }
+    
+    .nav-right { display: flex; align-items: center; gap: 24px; }
+    .bell-icon { position: relative; display: flex; align-items: center; }
+    .bell-icon svg { width: 20px; height: 20px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
+    .bell-icon:hover svg { color: var(--text); }
+    .badge {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--red); color: white; font-size: 10px; font-weight: bold; font-family: 'Share Tech Mono', monospace;
+      border-radius: 50%; width: 16px; height: 16px; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .live-status { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 12px; color: var(--text); letter-spacing: 1px; }
+    .live-dot { width: 8px; height: 8px; background-color: var(--green); border-radius: 50%; animation: blink 1.5s infinite; }
+    
+    @keyframes blink { 0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); } 50% { opacity: 0.3; box-shadow: none; } }
+    
+    /* Layout */
+    .app-shell { display: flex; flex: 1; overflow: hidden; position: relative; }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 60px; flex-shrink: 0; background-color: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 16px; z-index: 900;
+    }
+    .sidebar-btn {
+      width: 100%; height: 48px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-left: 3px solid transparent; color: var(--muted); transition: all 0.2s;
+    }
+    .sidebar-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .sidebar-btn.active { border-left-color: var(--cyan); color: var(--cyan); background: rgba(255, 85, 0, 0.05); }
+    .sidebar-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    
+    /* Main Content */
+    .main-content { flex: 1; position: relative; background: var(--bg); display: flex; }
+    #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: var(--bg); }
+    
+    /* Leaflet overrides */
+    .leaflet-container { background: var(--bg) !important; font-family: 'DM Sans', sans-serif; }
+    .leaflet-control-zoom { border: 1px solid var(--border) !important; background: var(--bg2) !important; filter: invert(1) hue-rotate(180deg); }
+    
+    /* Map Marker Animations */
+    .pulse-marker { display: flex; align-items: center; justify-content: center; position: relative; }
+    .pulse-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; z-index: 2; box-shadow: 0 0 10px currentColor; }
+    .pulse-ring {
+      position: absolute; width: 24px; height: 24px; border-radius: 50%; z-index: 1; background: currentColor;
+      animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    
+    @keyframes pulseRing {
+      0% { transform: scale(0.8); opacity: 0.8; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+    
+    .marker-label {
+      position: absolute; top: 22px; white-space: nowrap; color: #fff;
+      font-size: 11px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      background: rgba(10, 14, 26, 0.85); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);
+      letter-spacing: 0.5px;
+    }
+    
+    /* Marker Colors */
+    .sev-5 { color: var(--red); }
+    .sev-3, .sev-4 { color: var(--amber); }
+    .sev-1, .sev-2 { color: var(--cyan); }
+    .sev-5 .pulse-dot { background: var(--red); }
+    .sev-3 .pulse-dot, .sev-4 .pulse-dot { background: var(--amber); }
+    .sev-1 .pulse-dot, .sev-2 .pulse-dot { background: var(--cyan); }
+    
+    /* Stats Panel */
+    .stats-panel-wrapper {
+      position: absolute; top: 24px; left: 24px; z-index: 1000;
+      display: flex; gap: 12px; align-items: flex-start;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .stats-panel-wrapper.collapsed {
+      transform: translateX(calc(-100% + 44px));
+    }
+    .stats-card {
+      width: 280px; background: rgba(22, 12, 6, 0.85); backdrop-filter: blur(12px); border: 1px solid var(--border);
+      border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(43, 27, 16, 0.5); padding-bottom: 12px; }
+    .panel-header h2 { font-size: 18px; letter-spacing: 1.5px; color: #fff; margin: 0; }
+    
+    .toggle-arrow {
+      width: 32px; height: 32px; background: rgba(22, 12, 6, 0.85); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); color: var(--cyan);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s;
+    }
+    .toggle-arrow:hover { background: var(--bg2); border-color: var(--cyan); }
+    .stats-panel-wrapper.collapsed .toggle-arrow svg { transform: rotate(180deg); }
+    .toggle-arrow svg { transition: transform 0.4s; }
+    
+    .stat-item { display: flex; flex-direction: column; gap: 6px; }
+    .stat-label { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 1px; }
+    .stat-value { font-size: 36px; font-weight: 700; line-height: 1; text-shadow: 0 0 16px currentColor; animation: flicker 2s; }
+    .val-cyan { color: var(--cyan); }
+    .val-amber { color: var(--amber); }
+    .val-red { color: var(--red); }
+    
+    @keyframes flicker {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      20% { opacity: 0.4; }
+      30% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    
+    /* Map Controls */
+    .map-controls { position: absolute; top: 24px; right: 24px; z-index: 1000; display: flex; gap: 12px; }
+    .control-btn {
+      background: rgba(22, 12, 6, 0.85); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Rajdhani', sans-serif; font-weight: 600;
+      font-size: 13px; padding: 10px 16px; border-radius: 6px; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px); transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); letter-spacing: 0.5px;
+    }
+    .control-btn:hover { background: var(--bg2); border-color: var(--cyan); }
+    .control-btn.active { background: rgba(255, 85, 0, 0.1); border-color: var(--cyan); color: var(--cyan); }
+    
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .spin-icon svg { animation: spin 1s linear infinite; }
+    
+    /* Slide Up Panel */
+    .slide-panel {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(150%);
+      z-index: 1000; width: 440px; background: rgba(22, 12, 6, 0.95); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,0.8);
+      padding: 24px; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-panel.show { transform: translateX(-50%) translateY(0); }
+    
+    .panel-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .disaster-title { font-size: 24px; color: #fff; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .badge-pill { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-red { background: rgba(255, 59, 59, 0.15); color: var(--red); border: 1px solid var(--red); }
+    .badge-amber { background: rgba(255, 179, 64, 0.15); color: var(--amber); border: 1px solid var(--amber); }
+    .badge-cyan { background: rgba(255, 85, 0, 0.15); color: var(--cyan); border: 1px solid var(--cyan); }
+    
+    .close-panel { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 24px; display: flex; outline: none; transition: color 0.2s; }
+    .close-panel:hover { color: #fff; }
+    
+    .severity-blocks { display: flex; gap: 8px; margin-bottom: 24px; }
+    .sev-block { flex: 1; height: 8px; border-radius: 2px; background: rgba(255,255,255,0.05); }
+    .sev-block.filled-red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+    .sev-block.filled-amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+    .sev-block.filled-cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+    
+    .affected-box { background: rgba(10, 14, 26, 0.6); border: 1px solid rgba(160, 136, 112, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+    .affected-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 700;}
+    .affected-num { font-size: 32px; color: #fff; font-weight: 700; }
+    
+    .report-btn {
+      width: 100%; background: transparent; border: 1px solid var(--cyan); color: var(--cyan);
+      padding: 12px; border-radius: 6px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;
+      letter-spacing: 1px;
+    }
+    .report-btn:hover { background: rgba(255, 85, 0, 0.1); box-shadow: 0 0 16px rgba(255, 85, 0, 0.2); }
+    
+    /* Status Bar */
+    .status-bar {
+      height: 30px; flex-shrink: 0; background-color: var(--bg2); border-top: 1px solid var(--border); z-index: 1000;
+      display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 11px;
+      font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+    }
+  </style>
+  <script>
+    (function() {
+      var token = localStorage.getItem('cc_token') || sessionStorage.getItem('cc_token');
+      if (!token) { window.location.replace('login.html'); }
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="2,12 5,12 6.5,8 8,15 9.5,9 11,14 12,12 14,12 22,12"/>
+      </svg>
+      <h1><span class="brand-crisis">CRISIS</span><span class="brand-connect">CONNECT</span></h1>
+    </div>
+    <div class="nav-center">
+      <input type="text" class="search-input" placeholder="Search disasters, regions...">
+    </div>
+    <div class="nav-right">
+      <div class="bell-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <div class="badge data-font">3</div>
+      </div>
+      <div class="live-status">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+    </div>
+      <div class="nav-right-extra" style="display:flex;align-items:center;gap:16px;margin-left:8px;">
+      <span class="mono" id="nav-user" style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;"></span>
+      <button onclick="ccLogout()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">⏏ LOGOUT</button>
+    </div>
+  </nav>
+
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-btn active" title="Dashboard">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+      </a>
+      <a href="disaster.html" class="sidebar-btn" title="Disasters">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      </a>
+      <a href="displacement.html" class="sidebar-btn" title="Displacement">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </a>
+      <a href="resources.html" class="sidebar-btn" title="Resources">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+      </a>
+      <a href="secondary-risk.html" class="sidebar-btn" title="Risk">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </a>
+      <a href="simulate.html" class="sidebar-btn" title="Simulate">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+      </a>
+      <a href="analytics.html" class="sidebar-btn" title="Analytics">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+      </a>
+      <a href="alerts.html" class="sidebar-btn" title="Alerts" style="margin-top:auto; margin-bottom: 10px;">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div id="map"></div>
+      
+      <!-- Overlays -->
+      <div class="stats-panel-wrapper" id="stats-wrapper">
+        <div class="stats-card">
+          <div class="panel-header">
+            <h2>INTELLIGENCE OVERVIEW</h2>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">ACTIVE DISASTERS</span>
+            <span class="stat-value val-cyan data-font" id="stat-active">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">PEOPLE AFFECTED</span>
+            <span class="stat-value val-amber data-font" id="stat-affected">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">CRITICAL ALERTS</span>
+            <span class="stat-value val-red data-font" id="stat-critical">-</span>
+          </div>
+        </div>
+        <button class="toggle-arrow" onclick="document.getElementById('stats-wrapper').classList.toggle('collapsed')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+      </div>
+
+      <div class="map-controls">
+        <button class="control-btn" id="btn-heatmap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg>
+          HEATMAP OFF
+        </button>
+        <button class="control-btn" id="btn-fit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v2H5v4H3V3m18 0h-6v2h4v4h2V3m-2 18h-4v2h6v-6h-2v4M3 21h6v-2H5v-4H3v6"/></svg>
+          FIT ALL
+        </button>
+        <button class="control-btn" id="btn-refresh">
+          <span class="spin-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></span>
+          REFRESH
+        </button>
+      </div>
+
+      <!-- Slide Up Panel -->
+      <div class="slide-panel" id="disaster-panel">
+        <div class="panel-top">
+          <div>
+            <h3 class="disaster-title" id="p-title">Disaster Name</h3>
+            <span class="badge-pill" id="p-type">TYPE</span>
+          </div>
+          <button class="close-panel" id="close-panel">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="severity-blocks" id="p-severity"></div>
+        <div class="affected-box">
+          <div class="affected-label">Registered Population Affected</div>
+          <div class="affected-num data-font" id="p-affected">0</div>
+        </div>
+        <a href="#" class="report-btn" id="p-btn">VIEW FULL REPORT &rarr;</a>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div>LAST UPDATED: <span id="timestamp" class="data-font"></span></div>
+    <div><div class="live-status" style="display:inline-flex;"><div class="live-dot"></div></div>&nbsp;&nbsp;CRISISCONNECT v1.0 | GLOBAL DISASTER INTELLIGENCE</div>
+  </div>
+
+  <!-- App Script -->
+  <script>
+    const DISASTERS = [
+      {id:1,name:"Türkiye Earthquake",type:"Earthquake",severity:5,lat:37.5,lng:36.8,affected:2400000},
+      {id:2,name:"Bangladesh Flooding",type:"Flood",severity:4,lat:23.8,lng:90.4,affected:890000},
+      {id:3,name:"California Wildfire",type:"Wildfire",severity:3,lat:34.0,lng:-118.2,affected:145000},
+      {id:4,name:"Mozambique Cyclone",type:"Cyclone",severity:4,lat:-19.8,lng:34.9,affected:670000},
+      {id:5,name:"Pakistan Heatwave",type:"Heatwave",severity:3,lat:30.3,lng:69.3,affected:320000},
+      {id:6,name:"Philippines Typhoon",type:"Typhoon",severity:5,lat:12.8,lng:122.5,affected:1200000},
+      {id:7,name:"Peru Landslides",type:"Landslide",severity:2,lat:-9.2,lng:-75.0,affected:45000}
+    ];
+
+    // Initialize Map
+    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20, 0], 3);
+    
+    L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+    
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Populate Stats
+    function updateStats() {
+      const activeEl = document.getElementById('stat-active');
+      const affectedEl = document.getElementById('stat-affected');
+      const critEl = document.getElementById('stat-critical');
+      
+      const totalAffected = DISASTERS.reduce((s, d) => s + d.affected, 0);
+      const critical = DISASTERS.filter(d => d.severity >= 4).length;
+
+      activeEl.innerText = DISASTERS.length;
+      affectedEl.innerText = totalAffected.toLocaleString();
+      critEl.innerText = critical;
+      
+      [activeEl, affectedEl, critEl].forEach(el => {
+        el.style.animation = 'none';
+        el.offsetHeight; 
+        el.style.animation = 'flicker 2s';
+      });
+    }
+    updateStats();
+
+    // Map Layers
+    const markersLayer = L.layerGroup().addTo(map);
+    const heatPoints = [];
+    const bounds = [];
+
+    DISASTERS.forEach(d => {
+      let sevClass = '';
+      if(d.severity === 5) sevClass = 'sev-5';
+      else if(d.severity >= 3) sevClass = 'sev-3';
+      else sevClass = 'sev-1';
+      
+      // Marker
+      const iconHtml = `
+        <div class="pulse-marker ${sevClass}">
+          <div class="pulse-ring"></div>
+          <div class="pulse-dot"></div>
+          <div class="marker-label">${d.name}</div>
+        </div>
+      `;
+      
+      const icon = L.divIcon({
+        html: iconHtml,
+        className: '',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+      
+      const marker = L.marker([d.lat, d.lng], {icon}).addTo(markersLayer);
+      bounds.push([d.lat, d.lng]);
+      
+      marker.on('click', () => showSlidePanel(d, sevClass));
+
+      // Heatmap Data
+      const intensity = d.severity * 0.2;
+      heatPoints.push([d.lat, d.lng, intensity]);
+      // Jittered points
+      for(let i=0; i<10; i++) {
+        const jLat = d.lat + (Math.random() - 0.5) * 6;
+        const jLng = d.lng + (Math.random() - 0.5) * 6;
+        const jInt = intensity * (0.2 + Math.random() * 0.4);
+        heatPoints.push([jLat, jLng, jInt]);
+      }
+    });
+
+    // Fit bounds initially
+    setTimeout(() => map.fitBounds(bounds, { padding: [50, 50] }), 500);
+
+    // Heatmap Layer Setup
+    const heatLayer = L.heatLayer(heatPoints, {
+      radius: 40,
+      blur: 25,
+      maxZoom: 5,
+      gradient: {0.2: '#FF5500', 0.5: '#00e676', 0.8: '#ffb340', 1.0: '#ff3b3b'}
+    });
+
+    let heatmapActive = false;
+
+    // Controls
+    document.getElementById('btn-heatmap').addEventListener('click', function() {
+      heatmapActive = !heatmapActive;
+      if(heatmapActive) {
+        this.classList.add('active');
+        this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg> HEATMAP ON';
+        map.addLayer(heatLayer);
+        map.removeLayer(markersLayer);
+      } else {
+        this.classList.remove('active');
+        this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg> HEATMAP OFF';
+        map.removeLayer(heatLayer);
+        map.addLayer(markersLayer);
+      }
+    });
+
+    document.getElementById('btn-fit').addEventListener('click', () => {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    });
+
+    document.getElementById('btn-refresh').addEventListener('click', function() {
+      const svg = this.querySelector('svg');
+      svg.style.animation = 'spin 1s linear infinite';
+      updateStats();
+      setTimeout(() => { svg.style.animation = 'none'; }, 1000);
+    });
+
+    // Panel Logic
+    const panel = document.getElementById('disaster-panel');
+    
+    function showSlidePanel(d, sevClass) {
+      document.getElementById('p-title').innerText = d.name;
+      
+      const typeBadge = document.getElementById('p-type');
+      typeBadge.innerText = d.type;
+      typeBadge.className = `badge-pill ${sevClass === 'sev-5' ? 'badge-red' : (sevClass === 'sev-3' ? 'badge-amber' : 'badge-cyan')}`;
+      
+      const sevContainer = document.getElementById('p-severity');
+      sevContainer.innerHTML = '';
+      for(let i=1; i<=5; i++) {
+        const block = document.createElement('div');
+        block.className = 'sev-block';
+        if(i <= d.severity) {
+          if(d.severity === 5) block.classList.add('filled-red');
+          else if(d.severity >= 3) block.classList.add('filled-amber');
+          else block.classList.add('filled-cyan');
+        }
+        sevContainer.appendChild(block);
+      }
+      
+      document.getElementById('p-affected').innerText = d.affected.toLocaleString();
+      document.getElementById('p-btn').href = 'disaster.html?id=' + d.id;
+      
+      panel.classList.add('show');
+    }
+
+    document.getElementById('close-panel').addEventListener('click', () => {
+      panel.classList.remove('show');
+    });
+
+    // Timestamp
+    function updateTimestamp() {
+      const ts = document.getElementById('timestamp');
+      const d = new Date();
+      // Format: YYYY-MM-DD HH:MM:SS
+      const p = n => n.toString().padStart(2, '0');
+      ts.innerText = `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`;
+    }
+    setInterval(updateTimestamp, 1000);
+  </script>
+
+    <script>
+      /* ── Auth helpers ── */
+      function ccLogout() {
+        localStorage.removeItem('cc_token');
+        localStorage.removeItem('cc_user');
+        sessionStorage.removeItem('cc_token');
+        sessionStorage.removeItem('cc_user');
+        window.location.replace('login.html');
+      }
+      (function() {
+        var user = localStorage.getItem('cc_user') || sessionStorage.getItem('cc_user') || '';
+        var el = document.getElementById('nav-user');
+        if (el && user) el.textContent = user.split('@')[0].toUpperCase();
+      })();
+    </script>
+</body>
+</html>
