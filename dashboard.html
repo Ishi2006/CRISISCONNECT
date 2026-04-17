@@ -3,22 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRISIS CONNECT | Resource Planning</title>
+  <title>CRISIS CONNECT | Command Center</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
+  
   <!-- Shared Styles -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   
   <!-- Page Specific Styles -->
-  <link rel="stylesheet" href="css/resources.css">
+  <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
 
@@ -54,7 +52,7 @@
   <div class="app-shell">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <a href="dashboard.html" class="sidebar-btn" title="Dashboard">
+      <a href="dashboard.html" class="sidebar-btn active" title="Dashboard">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
       </a>
       <a href="disaster.html" class="sidebar-btn" title="Disasters">
@@ -63,7 +61,7 @@
       <a href="displacement.html" class="sidebar-btn" title="Displacement">
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
       </a>
-      <a href="resources.html" class="sidebar-btn active" title="Resources">
+      <a href="resources.html" class="sidebar-btn" title="Resources">
         <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
       </a>
       <a href="secondary-risk.html" class="sidebar-btn" title="Risk">
@@ -84,80 +82,84 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="main-content">
-      
-      <!-- Leaflet Map Area -->
+    <main class="main-content">
       <div id="map"></div>
       
-      <!-- Map Legend -->
-      <div class="map-legend">
-        <div class="legend-title">SHELTER CAPACITY</div>
-        <div class="legend-item"><div class="sys-sq sq-green"></div> >60% Spaces Available</div>
-        <div class="legend-item"><div class="sys-sq sq-amber"></div> 30-60% Spaces Available</div>
-        <div class="legend-item"><div class="sys-sq sq-red"></div> <30% Available (CRITICAL)</div>
-      </div>
-      
-      <!-- Right Detail Panel -->
-      <div class="right-panel">
-        <div class="panel-header">
-          <h2>RESOURCE PLANNING</h2>
-          <p id="sub-title">Disaster Local Domain</p>
+      <!-- Overlays -->
+      <div class="stats-panel-wrapper" id="stats-wrapper">
+        <div class="stats-card">
+          <div class="panel-header">
+            <h2>INTELLIGENCE OVERVIEW</h2>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">ACTIVE DISASTERS</span>
+            <span class="stat-value val-cyan data-font" id="stat-active">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">PEOPLE AFFECTED</span>
+            <span class="stat-value val-amber data-font" id="stat-affected">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">CRITICAL ALERTS</span>
+            <span class="stat-value val-red data-font" id="stat-critical">-</span>
+          </div>
         </div>
-
-        <div class="panel-content">
-          
-          <div>
-            <h3 class="section-title">CAPACITY OVERVIEW</h3>
-            <div class="resource-list" id="global-bars">
-              <!-- JS Filled -->
-            </div>
-          </div>
-
-          <div>
-            <h3 class="section-title">CRITICAL GAPS</h3>
-            <div class="alert-list" id="alert-list">
-              <!-- JS Filled -->
-            </div>
-          </div>
-
-          <div>
-            <h3 class="section-title">NEAREST SUPPLY ZONES</h3>
-            <div class="zone-list">
-              <div class="zone-item">
-                <div class="zone-left"><div class="zone-dot"></div><span class="zone-name">Central Depot 1</span></div>
-                <div class="zone-dist">12 km</div>
-              </div>
-              <div class="zone-item">
-                <div class="zone-left"><div class="zone-dot"></div><span class="zone-name">Logistics Hub Air</span></div>
-                <div class="zone-dist">48 km</div>
-              </div>
-              <div class="zone-item">
-                <div class="zone-left"><div class="zone-dot" style="background:var(--amber);box-shadow:0 0 5px var(--amber);"></div><span class="zone-name">Relief Outpost Y</span></div>
-                <div class="zone-dist">105 km</div>
-              </div>
-            </div>
-          </div>
-
-          <a href="#" class="req-btn">
-            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            REQUEST RESOURCES
-          </a>
-
-        </div>
+        <button class="toggle-arrow" onclick="document.getElementById('stats-wrapper').classList.toggle('collapsed')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
       </div>
-    </div>
+
+      <div class="map-controls">
+        <button class="control-btn" id="btn-heatmap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg>
+          HEATMAP OFF
+        </button>
+        <button class="control-btn" id="btn-fit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v2H5v4H3V3m18 0h-6v2h4v4h2V3m-2 18h-4v2h6v-6h-2v4M3 21h6v-2H5v-4H3v6"/></svg>
+          FIT ALL
+        </button>
+        <button class="control-btn" id="btn-refresh">
+          <span class="spin-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></span>
+          REFRESH
+        </button>
+      </div>
+
+      <!-- Slide Up Panel -->
+      <div class="slide-panel" id="disaster-panel">
+        <div class="panel-top">
+          <div>
+            <h3 class="disaster-title" id="p-title">Disaster Name</h3>
+            <span class="badge-pill" id="p-type">TYPE</span>
+          </div>
+          <button class="close-panel" id="close-panel">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="severity-blocks" id="p-severity"></div>
+        <div class="affected-box">
+          <div class="affected-label">Registered Population Affected</div>
+          <div class="affected-num data-font" id="p-affected">0</div>
+        </div>
+        <a href="#" class="report-btn" id="p-btn">VIEW FULL REPORT &rarr;</a>
+      </div>
+
+    </main>
   </div>
 
   <!-- Status Bar -->
   <div class="status-bar">
     <div>LAST UPDATED: <span id="timestamp" class="data-font"></span></div>
-    <div>CRISISCONNECT v1.0 | VIEW : LOGISTICS & RESOURCES</div>
+    <div><div class="live-status" style="display:inline-flex;"><div class="live-dot"></div></div>&nbsp;&nbsp;CRISISCONNECT v1.0 | GLOBAL DISASTER INTELLIGENCE</div>
   </div>
 
-  <!-- Auth Script -->
-  <script src="js/auth.js"></script>
+  <!-- External Map Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
-  <!-- Page Logic -->
-  <script src="js/resources.js"></script>
+  <!-- Shared Logic -->
+  <script src="js/auth.js"></script>
+  
+  <!-- Page Specific Logic -->
+  <script src="js/dashboard.js"></script>
 </body>
 </html>

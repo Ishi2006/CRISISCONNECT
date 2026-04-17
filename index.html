@@ -1,165 +1,519 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRISIS CONNECT | Command Center</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-  
-  <!-- Shared Styles -->
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
-  
-  <!-- Page Specific Styles -->
-  <link rel="stylesheet" href="css/dashboard.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrisisConnect | Explore Our World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --text: #ffffff;
+            --secondary: #a0a0a0;
+            --accent: #3b82f6;
+            --globe-size: 300px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 2000;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Starfield */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle var(--duration, 3s) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Globe Container */
+        .globe-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: var(--globe-size);
+            height: var(--globe-size);
+            margin-top: calc(var(--globe-size) / -2);
+            margin-left: calc(var(--globe-size) / -2);
+            z-index: 2;
+            pointer-events: none;
+            transition: transform 1.4s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform;
+        }
+
+        .globe {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: url('https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/globe.jpeg');
+            background-size: cover;
+            animation: rotate-globe 30s linear infinite;
+            box-shadow: 
+                inset -30px -30px 80px rgba(0, 0, 0, 0.9),
+                inset 10px 10px 60px rgba(59, 130, 246, 0.4),
+                0 0 50px rgba(59, 130, 246, 0.2);
+            position: relative;
+        }
+
+        @keyframes rotate-globe {
+            from { background-position: 0 0; }
+            to { background-position: 400px 0; }
+        }
+
+        .globe-light {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Navigation Dots */
+        .dot-nav {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dot-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+            cursor: pointer;
+            group: hover;
+        }
+
+        .dot-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .dot-wrapper:hover .dot-label {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .dot-wrapper.active .dot {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+            transform: scale(1.3);
+        }
+
+        .dot-wrapper.active .dot-label {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Sections */
+        section {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 10%;
+            position: relative;
+            z-index: 3;
+        }
+
+        .content {
+            max-width: 600px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease;
+        }
+
+        section.active .content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hero */
+        .hero-title {
+            font-size: 80px;
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+
+        .hero-title span { color: var(--accent); }
+
+        .subtext {
+            font-size: 18px;
+            color: var(--secondary);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-filled {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        .btn-filled:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: white;
+        }
+
+        /* Innovation (Center) */
+        .section-innovation {
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Discovery (Feature Cards) */
+        .feature-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--secondary);
+        }
+
+        /* Future (Center) */
+        .section-future {
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Navbar */
+        .nav-header {
+            position: fixed;
+            top: 30px;
+            left: 40px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: white;
+            letter-spacing: 2px;
+        }
+
+        .logo span { color: var(--accent); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 50px; }
+            .dot-nav { display: none; }
+            .globe-container { --globe-size: 200px; }
+            section { padding: 0 5%; }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="nav-left">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/><polyline points="2,12 5,12 6.5,8 8,15 9.5,9 11,14 12,12 14,12 22,12"/>
-      </svg>
-      <h1><span class="brand-crisis">CRISIS</span><span class="brand-connect">CONNECT</span></h1>
-    </div>
-    <div class="nav-center">
-      <input type="text" class="search-input" placeholder="Search disasters, regions...">
-    </div>
-    <div class="nav-right">
-      <div class="bell-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <div class="badge data-font">3</div>
-      </div>
-      <div class="live-status">
-        <div class="live-dot"></div>
-        LIVE
-      </div>
-    </div>
-    <div class="nav-right-extra">
-      <span class="mono" id="nav-user"></span>
-      <button onclick="ccLogout()">⏏ LOGOUT</button>
-    </div>
-  </nav>
+    <div id="progress-bar"></div>
+    <div id="starfield"></div>
 
-  <div class="app-shell">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <a href="index.html" class="sidebar-btn active" title="Dashboard">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
-      </a>
-      <a href="disaster.html" class="sidebar-btn" title="Disasters">
-        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-      </a>
-      <a href="displacement.html" class="sidebar-btn" title="Displacement">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-      </a>
-      <a href="resources.html" class="sidebar-btn" title="Resources">
-        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-      </a>
-      <a href="secondary-risk.html" class="sidebar-btn" title="Risk">
-        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-      </a>
-      <a href="simulate.html" class="sidebar-btn" title="Simulate">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
-      </a>
-      <a href="analytics.html" class="sidebar-btn" title="Analytics">
-        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-      </a>
-      <a href="alerts.html" class="sidebar-btn" title="Alerts">
-        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-      </a>
-      <a href="emergency.html" class="sidebar-btn" title="Emergency" style="margin-top:auto; margin-bottom: 10px;">
-        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-      </a>
-    </aside>
+    <header class="nav-header">
+        <div class="logo">CRISIS<span>CONNECT</span></div>
+    </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div id="map"></div>
-      
-      <!-- Overlays -->
-      <div class="stats-panel-wrapper" id="stats-wrapper">
-        <div class="stats-card">
-          <div class="panel-header">
-            <h2>INTELLIGENCE OVERVIEW</h2>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">ACTIVE DISASTERS</span>
-            <span class="stat-value val-cyan data-font" id="stat-active">-</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">PEOPLE AFFECTED</span>
-            <span class="stat-value val-amber data-font" id="stat-affected">-</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">CRITICAL ALERTS</span>
-            <span class="stat-value val-red data-font" id="stat-critical">-</span>
-          </div>
+    <div class="globe-container" id="globe-wrap">
+        <div class="globe">
+            <div class="globe-light"></div>
         </div>
-        <button class="toggle-arrow" onclick="document.getElementById('stats-wrapper').classList.toggle('collapsed')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
-      </div>
+    </div>
 
-      <div class="map-controls">
-        <button class="control-btn" id="btn-heatmap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="7" stroke-opacity="0.5"/></svg>
-          HEATMAP OFF
-        </button>
-        <button class="control-btn" id="btn-fit">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v2H5v4H3V3m18 0h-6v2h4v4h2V3m-2 18h-4v2h6v-6h-2v4M3 21h6v-2H5v-4H3v6"/></svg>
-          FIT ALL
-        </button>
-        <button class="control-btn" id="btn-refresh">
-          <span class="spin-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></span>
-          REFRESH
-        </button>
-      </div>
-
-      <!-- Slide Up Panel -->
-      <div class="slide-panel" id="disaster-panel">
-        <div class="panel-top">
-          <div>
-            <h3 class="disaster-title" id="p-title">Disaster Name</h3>
-            <span class="badge-pill" id="p-type">TYPE</span>
-          </div>
-          <button class="close-panel" id="close-panel">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
+    <nav class="dot-nav">
+        <div class="dot-wrapper active" onclick="scrollToSection(0)" data-section="0">
+            <span class="dot-label">Explore</span>
+            <div class="dot"></div>
         </div>
-        <div class="severity-blocks" id="p-severity"></div>
-        <div class="affected-box">
-          <div class="affected-label">Registered Population Affected</div>
-          <div class="affected-num data-font" id="p-affected">0</div>
+        <div class="dot-wrapper" onclick="scrollToSection(1)" data-section="1">
+            <span class="dot-label">Innovation</span>
+            <div class="dot"></div>
         </div>
-        <a href="#" class="report-btn" id="p-btn">VIEW FULL REPORT &rarr;</a>
-      </div>
+        <div class="dot-wrapper" onclick="scrollToSection(2)" data-section="2">
+            <span class="dot-label">Discovery</span>
+            <div class="dot"></div>
+        </div>
+        <div class="dot-wrapper" onclick="scrollToSection(3)" data-section="3">
+            <span class="dot-label">Future</span>
+            <div class="dot"></div>
+        </div>
+    </nav>
 
-    </main>
-  </div>
+    <!-- Hero Section -->
+    <section class="section-hero active" id="sec-0">
+        <div class="content">
+            <h1 class="hero-title">Explore /<br><span>Our World.</span></h1>
+            <p class="subtext">
+                Witness the pulse of our planet in high-definition. CrisisConnect provides 
+                immersive disaster intelligence for a resilient tomorrow.
+            </p>
+            <div class="btn-group">
+                <a href="dashboard.html" class="btn btn-filled">Begin Journey</a>
+                <a href="#" class="btn btn-outline" onclick="scrollToSection(1)">Learn More</a>
+            </div>
+        </div>
+    </section>
 
-  <!-- Status Bar -->
-  <div class="status-bar">
-    <div>LAST UPDATED: <span id="timestamp" class="data-font"></span></div>
-    <div><div class="live-status" style="display:inline-flex;"><div class="live-dot"></div></div>&nbsp;&nbsp;CRISISCONNECT v1.0 | GLOBAL DISASTER INTELLIGENCE</div>
-  </div>
+    <!-- Innovation Section -->
+    <section class="section-innovation" id="sec-1">
+        <div class="content">
+            <h2 class="hero-title">Connected<br><span>Worldwide.</span></h2>
+            <p class="subtext">
+                Our neural network monitors global activity 24/7, linking disparate data points 
+                into a unified tactical vision.
+            </p>
+            <a href="#" class="btn btn-outline" onclick="scrollToSection(2)">See Capabilities</a>
+        </div>
+    </section>
 
-  <!-- External Map Scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Discovery Section -->
+    <section class="section-discovery" id="sec-2">
+        <div class="content">
+            <h2 class="hero-title">Expanding /<br><span>Possibilities.</span></h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Tactical Precision</h3>
+                    <p>Real-time tracking with sub-meter accuracy in high-stress environments.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Predictive AI</h3>
+                    <p>Anticipate disaster paths before they materialize with neural modeling.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Global Response</h3>
+                    <p>Coordinated logistics bridge the gap between need and relief.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <!-- Shared Logic -->
-  <script src="js/auth.js"></script>
-  
-  <!-- Page Specific Logic -->
-  <script src="js/dashboard.js"></script>
+    <!-- Future Section -->
+    <section class="section-future" id="sec-3">
+        <div class="content">
+            <h2 class="hero-title">Our Shared /<br><span>Tomorrow.</span></h2>
+            <p class="subtext">
+                Be part of the revolution in disaster resilience. The future of protection starts here.
+            </p>
+            <div class="btn-group" style="justify-content: center;">
+                <a href="login.html" class="btn btn-filled">Join the Movement</a>
+                <a href="dashboard.html" class="btn btn-outline">Explore More</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Init Starfield
+        const starfield = document.getElementById('starfield');
+        const starCount = 100;
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+            starfield.appendChild(star);
+        }
+
+        // Scroll Logic
+        const globe = document.getElementById('globe-wrap');
+        const sections = document.querySelectorAll('section');
+        const dots = document.querySelectorAll('.dot-wrapper');
+        const progressBar = document.getElementById('progress-bar');
+
+        const globeStates = [
+            { x: '150px', y: '0', scale: 1.2 },    // Hero: On the right
+            { x: '0', y: '0', scale: 1 },         // Innovation: Center
+            { x: '-150px', y: '0', scale: 1 },    // Discovery: On the left
+            { x: '0', y: '100px', scale: 2 }      // Future: Foreground
+        ];
+
+        function handleScroll() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = scrollTop / scrollHeight;
+
+            // Progress Bar
+            progressBar.style.width = `${progress * 100}%`;
+
+            // Active Section and Globe Transform
+            let activeIdx = 0;
+            sections.forEach((section, idx) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                    activeIdx = idx;
+                }
+            });
+
+            // Update Globe
+            const state = globeStates[activeIdx];
+            globe.style.transform = `translate(${state.x}, ${state.y}) scale(${state.scale})`;
+
+            // Update UI
+            sections.forEach((s, i) => {
+                if (i === activeIdx) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+
+            dots.forEach((d, i) => {
+                if (i === activeIdx) d.classList.add('active');
+                else d.classList.remove('active');
+            });
+        }
+
+        function scrollToSection(idx) {
+            window.scrollTo({
+                top: window.innerHeight * idx,
+                behavior: 'smooth'
+            });
+        }
+
+        window.addEventListener('scroll', () => {
+            requestAnimationFrame(handleScroll);
+        });
+
+        // Trigger once on load
+        handleScroll();
+
+        // Responsive handling for globe positions
+        function resizeHandler() {
+            if (window.innerWidth < 768) {
+                globeStates[0] = { x: '0', y: '100px', scale: 0.8 };
+                globeStates[1] = { x: '0', y: '0', scale: 0.8 };
+                globeStates[2] = { x: '0', y: '-100px', scale: 0.8 };
+                globeStates[3] = { x: '0', y: '150px', scale: 1.2 };
+            } else {
+                globeStates[0] = { x: '150px', y: '0', scale: 1.2 };
+                globeStates[1] = { x: '0', y: '0', scale: 1 };
+                globeStates[2] = { x: '-150px', y: '0', scale: 1 };
+                globeStates[3] = { x: '0', y: '100px', scale: 2 };
+            }
+            handleScroll();
+        }
+
+        window.addEventListener('resize', resizeHandler);
+        resizeHandler();
+    </script>
 </body>
 </html>
